@@ -22,7 +22,7 @@ body {
 }
 
 .login img {
-    height: 120px;
+    height: 110px;
     margin-bottom: 20px;
 }
 
@@ -83,4 +83,30 @@ body {
     margin-top: 20px;
     font-size: 14px;
     color: #454646;
+}
+
+@media (max-width: 600px) {
+    .login {
+        width: 95%;
+        max-width: 350px;
+        padding: 15px;
+    }
+
+    .login img {
+        height: 80px; /* Reducir el tamaño del logo en móviles */
+    }
+
+    .login input {
+        font-size: 14px; /* Tamaño de letra más pequeño */
+        padding: 8px;
+    }
+
+    .login button {
+        padding: 8px 20px;
+        font-size: 14px;
+    }
+
+    .login p {
+        font-size: 12px;
+    }
 }
