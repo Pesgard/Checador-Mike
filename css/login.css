@@ -89,11 +89,11 @@ body {
     .login {
         width: 80%;
         max-width: 280px;
-        padding: 5px 15px;
+        padding: 0px 15px;
     }
 
     .login img {
-        height: 80px; /* Reducir el tamaño del logo en móviles */
+        height: 90px; /* Reducir el tamaño del logo en móviles */
     }
 
     .login input {
