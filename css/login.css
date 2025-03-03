@@ -90,6 +90,7 @@ body {
         width: 80%;
         max-width: 280px;
         padding: 0px 15px;
+        height: 70vh;
     }
 
     .login img {
