@@ -34,7 +34,7 @@ body {
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 16px;
-    color: #454646;
+    color: red;
 }
 .login input:focus {
     border-color: #454646;
