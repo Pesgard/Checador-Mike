@@ -255,18 +255,120 @@ a {
   align-items: center;
   margin-top: 20px;
   margin-bottom: 20px;
-  gap: 10px;
+  background-color: #fff;
+  width: 20%;
+  margin: auto;
+  margin-top: 20px;
+  margin-bottom: 25px;
+  border-radius: 10px;
+  border: solid 1px var(--second-color);
 }
 .barra-opciones button{
-  background-color: var(--second-color);
-  color: var(--white-color);
+  background-color: #fff;
+  color: var(--text);
   border: none;
   padding: 10px 30px;
-  border-radius: 20px;
   cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.3s ease;
+  font-size: 14px;
+  width: 100%;
+  border-radius: 10px;
 }
-.barra-opciones button:hover{
-  background-color: #3367D6;
+.barra-opciones button.activo{
+  background-color: var(--second-color);
+  color: #fff;
+  border-radius: 5px;
+}
+.menu-desplegable{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.menu-desplegable h1{
+  color: var(--text);
+  margin-bottom: 15px;
+}
+.menu-desplegable select{
+  width: 10%;
+  border: solid 1px var(--second-color);
+  border-radius: 5px;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.horario-ver{
+  background-color: #fff;
+  width: 70%;
+  display: flex;
+  margin: auto;
+  justify-content: center;
+  margin-top: 30px;
+  height: 50vh;
+  border-radius: 10px;
+}
+.horario-ver h1{
+  color: var(--text);
+  margin: auto;
+}
+
+/*? ======== Seccion 3 Agregar Usuario ==========  */
+.form-usuarios{
+  background-color: #fff;
+  width: 50%;
+  display: flex;
+  margin: auto;
+  flex-direction: column;
+  gap: 40px;
+  padding: 25px;
+  border-radius: 10px;
+}
+.form-usuarios h1{
+  color: var(--text);
+  text-align: center;
+}
+.form-usuarios input{
+  border: solid 1px var(--text);
+  padding: 5px ;
+  border-radius: 5px;
+  font-size: 15px ;
+}
+.form-usuarios label{
+  color: var(--text);
+  font-family: sans-serif;
+}
+.form-usuarios select{
+  border: solid 1px var(--text);
+  font-size: 15px;
+  padding: 5px;
+  border-radius: 5px;
+  color: var(--text);
+}
+
+/*? ======== Seccion 4 agregar materia =========  */
+
+
+/*? ============ Seccion 5 agregar Temario ===========  */
+.temario{
+  display: flex;
+  flex-direction:column ;
+  width: 50%;
+  align-items: center;
+  margin: auto;
+  gap: 30px;
+  background-color: #fff;
+  padding: 25px;
+  border-radius:10px ;
+}
+.temario h1{
+  color: var(--text);
+}
+.temario select{
+  color: var(--text);
+  background-color: #fff;
+  border-radius: 5px;
+  border: solid 1px var(--text);
+  width: 20%;
+  font-size: 15px;
+}
+.temario input{
+  color: var(--text);
 }
