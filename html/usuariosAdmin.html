@@ -52,23 +52,34 @@
         </div>
         <section>
             <div class="barra-opciones">
-                <button>Ver</button>
-                <button>Agregar</button>
+                <a href="#" class="activo">Editar</a>
+                <a href="usuariosAdminAñadir.html">Añadir</a>
             </div>
 
-            <form action="#" class="form-usuarios">
-                <h1>Ver/Editar usuario</h1>
-                <input type="text" placeholder="ID USUARIO">
+            <!-- Buscar al usuario con su numero de cuenta -->
+            <form action="" class="form-usuarios" style="margin-bottom: 30px;">
+                <h1>Para poder ver o editar un usuario es necesario contar con un numero de cuenta</h1>
+                <div class="busqueda">
+                    <input type="number" placeholder="Ingrese el numero de cuenta">
+                    <button class="boton-global">Buscar</button>
+                </div>
+                <h1>Datos del usuario</h1>
+                <input type="number" placeholder="Numero de cuenta">
                 <input type="text" name="NombreCompletoUsuario" id="" placeholder="Nombre del usuario">
-                <input type="text" name="" id="" placeholder="Apellidos">
                 <input type="email" placeholder="Correo Electronico">
                 <input type="password" placeholder="Contraseña">
                 <label for="">Rol del usuario</label>
                 <select name="" id="">
-                    <option value="">Maestro</option>
+                    <option value="">Alumno</option>
                     <option value="">Jefe de grupo</option>
                     <option value="">Coordinador</option>
+                    <option value="">Maestro</option>
+                    <option value="">Administrador</option>
                 </select>
+                <div class="busqueda" style="flex-direction:row-reverse ;">
+                    <button class="boton-global">Guardar</button>
+                    <button class="boton-global-rojo">Eliminar</button>
+                </div>
             </form>
         </section>
     </body>

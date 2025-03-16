@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="/css/principal.css">
         <link href='https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css' rel='stylesheet'>
-        <title>Horario Administrador</title>
+        <title>Usuarios Administrador</title>
     </head>
     <body id="body">
         <div class="l-navbar" id="navbar">
@@ -25,11 +25,11 @@
                             <i class='bx bx-grid-alt nav__icon'></i>
                             <span class="nav__text">Menu</span>
                         </a>
-                        <a href="horarioAdmin.html" class="nav__link active">
+                        <a href="horarioAdmin.html" class="nav__link">
                             <i class='bx bx-calendar-star nav__icon'></i>
                             <span class="nav__text">Horario</span>
                         </a>
-                        <a href="usuariosAdmin.html" class="nav__link">
+                        <a href="usuariosAdmin.html" class="nav__link active">
                             <i class='bx bx-user nav__icon' ></i>
                             <span class="nav__text">Usuarios</span>
                         </a>
@@ -50,25 +50,29 @@
                 </a>
             </nav>
         </div>
-
         <section>
             <div class="barra-opciones">
-                <a href="#" class="activo">Editar</a>
-                <a href="horarioAdminAñadir.html">Agregar</a>
+                <a href="usuariosAdmin.html">Editar</a>
+                <a href="#" class="activo">Añadir</a>
             </div>
 
-            <div class="menu-desplegable">
-                <h1>Seleccione el horario del grupo que quiera ver</h1>
-                <select name="Grupo" id="">
-                    <option value="401">401</option>
+            <form action="#" class="form-usuarios">
+                <h1>Añadir usuario</h1>
+                <input type="number" placeholder="Numero de cuenta">
+                <input type="text" name="NombreCompletoUsuario" id="" placeholder="Nombre del usuario">
+                <input type="email" placeholder="Correo Electronico">
+                <input type="password" placeholder="Contraseña">
+                <label for="">Rol del usuario</label>
+                <select name="" id="">
+                    <option value="">Alumno</option>
+                    <option value="">Jefe de grupo</option>
+                    <option value="">Coordinador</option>
+                    <option value="">Maestro</option>
+                    <option value="">Administrador</option>
                 </select>
-            </div>
-            <div class="horario-ver">
-                <h1>Aqui se mostrara el horario del grupo seleccionado</h1>
-            </div>
+            </form>
         </section>
     </body>
-
-<script src="/js/sidebar.js"></script>
 <script src="/js/barraOpciones.js"></script>
+<script src="/js/sidebar.js"></script>
 </html>
