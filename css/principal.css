@@ -469,223 +469,161 @@ th {
 
 /* ! Aqui ortega modifica los valores para que sea responsivo */
 @media (max-width: 480px) {
+/* Estilos generales */
+.form-usuarios {
+    background-color: #fff;
+    width: 90%;
+    max-width: 700px;
+    display: flex;
+    margin: auto;
+    flex-direction: column;
+    gap: 40px;
+    padding: 25px;
+    border-radius: 10px;
+}
 
+/* Menú desplegable */
+.menu-desplegable {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 600px;
+    margin: auto;
+}
+.menu-desplegable h1 {
+    color: var(--text);
+    margin-bottom: 15px;
+    font-size: clamp(18px, 4vw, 24px);
+}
+.menu-desplegable select {
+    width: 100%;
+    max-width: 300px;
+    border: solid 1px var(--second-color);
+    border-radius: 5px;
+    font-size: 15px;
+    color: var(--text);
+    padding: 5px;
+    text-align: center;
+}
+
+/* Contenedor de tabla responsiva */
+.horario-ver {
+    background-color: #fff;
+    width: 90%;
+    max-width: 800px;
+    display: flex;
+    margin: auto;
+    justify-content: center;
+    margin-top: 30px;
+    height: auto;
+    border-radius: 10px;
+    padding: 20px;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: sans-serif;
+}
+th, td {
+    border: 1px solid var(--text);
+    padding: 10px;
+    text-align: center;
+}
+th {
+    background-color: #f2f2f2;
+}
+
+/* Botón adaptable */
+.boton-global-rojo {
+    background-color: #fff;
+    color: red;
+    border: solid 1px red;
+    border-radius: 5px;
+    padding: 8px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.boton-global-rojo:hover {
+    background-color: red;
+    color: white;
+}
+
+/* Barra de opciones responsiva */
+.barra-opciones {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto;
+    background-color: #fff;
+    width: 80%;
+    max-width: 300px;
+    border-radius: 10px;
+    border: solid 1px var(--second-color);
+}
+.barra-opciones a {
+    background-color: #fff;
+    color: var(--text);
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100%;
+    border-radius: 10px;
+    font-family: sans-serif;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+.barra-opciones a:hover {
+    background-color: #c5c5c5;
+}
+.barra-opciones a.activo {
+    background-color: var(--second-color);
+    color: #fff;
+}
+
+/* 🔹 Media queries para mejor adaptación */
+@media (max-width: 1024px) {
     .form-usuarios {
-        background-color: #fff;
-        width: 70%; /* Aumentar el ancho en pantallas grandes */
-        max-width: 900px; /* Limitar el ancho máximo */
-        display: flex;
-        margin: -4px;
-        flex-direction: column;
-        gap: 40px;
-        padding: 25px;
-        border-radius: 10px;
-    }
-    
-    /* Ajustes para pantallas medianas */
-    @media (max-width: 1024px) {
-        .form-usuarios {
-            width: 80%; /* Hacerlo un poco más estrecho en tablets */
-            max-width: 700px;
-        }
-    }
-    
-    /* Ajustes para pantallas pequeñas (móviles) */
-    @media (max-width: 768px) {
-        .form-usuarios {
-            width: 90%; /* Hacerlo más ancho en móviles para mejor uso */
-            max-width: none;
-            padding: 20px; /* Reducir el padding para mejor ajuste */
-            gap: 20px; /* Reducir la separación entre elementos */
-        }
-    }
-    
-    /* Ajustes para pantallas muy pequeñas */
-    @media (max-width: 480px) {
-        .form-usuarios {
-            width: 95%; /* Usar casi todo el ancho disponible */
-            padding: 15px;
-        }
-    }
-    /* ! Aqui se modifica el menu del horario de grados*/
-
-    .menu-desplegable {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%; /* Asegurar que el contenedor se expanda adecuadamente */
-    }
-    
-    .menu-desplegable h1 {
-        color: var(--text);
-        margin-bottom: 15px;
-        text-align: center; /* Asegurar que el título esté centrado */
-    }
-    
-    .menu-desplegable select {
-        width: 15%; /* Hacerlo un poco más grande para mejor accesibilidad */
-        min-width: 120px; /* Evitar que sea demasiado pequeño en pantallas reducidas */
-        border: solid 1px var(--second-color);
-        border-radius: 5px;
-        font-size: 15px;
-        color: var(--text);
-        padding: 5px;
-        text-align: center; /* Asegurar que el texto del select esté centrado */
-    }
-    
-    /* Ajustes para pantallas medianas */
-    @media (max-width: 1024px) {
-        .menu-desplegable select {
-            width: 20%; /* Ampliar el tamaño en tablets */
-        }
-    }
-    
-    /* Ajustes para pantallas pequeñas (móviles) */
-    @media (max-width: 768px) {
-        .menu-desplegable select {
-            width: 50%; /* Ampliar el select en móviles para mejor usabilidad */
-            font-size: 14px;
-        }
-    }
-    
-    /* Ajustes para pantallas muy pequeñas */
-    @media (max-width: 480px) {
-        .menu-desplegable select {
-            width: 80%; /* Usar casi todo el ancho disponible */
-            font-size: 13px;
-        }
-    }
-    
-    /* interfaces */
-
-    .menu-desplegable {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        max-width: 600px;
-        margin: -4px;
-    }
-    .menu-desplegable h1 {
-        color: var(--text);
-        margin-bottom: 15px;
-        font-size: clamp(18px, 4vw, 24px); /* Adaptable al tamaño de pantalla */
-    }
-    .menu-desplegable select {
-        width: 100%;
-        max-width: 300px;
-        border: solid 1px var(--second-color);
-        border-radius: 5px;
-        font-size: 15px;
-        color: var(--text);
-    }
-    
-    /* Contenedor de tabla responsiva */
-    .horario-ver {
-        background-color: #fff;
-        width: 90%;
-        max-width: 800px;
-        display: flex;
-        margin: -4px;
-        justify-content: center;
-        margin-top: 30px;
-        height: auto;
-        border-radius: 10px;
-        padding: 20px;
-        overflow-x: auto;
-    }
-    
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: sans-serif;
-    }
-    th, td {
-        border: 1px solid var(--text);
-        padding: 10px;
-        text-align: center;
-    }
-    th {
-        background-color: #f2f2f2;
-    }
-    
-    /* Botón adaptable */
-    .boton-global-rojo {
-        background-color: #fff;
-        color: red;
-        border: solid 1px red;
-        border-radius: 5px;
-        padding: 8px 15px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    .boton-global-rojo:hover {
-        background-color: red;
-        color: white;
-    }
-    
-    /* Formulario más ancho */
-    .form-usuarios {
-        background-color: #fff;
-        width: 90%;
-        max-width: 700px;
-        display: flex;
-        margin: -4px;
-        flex-direction: column;
-        gap: 40px;
-        padding: 25px;
-        border-radius: 10px;
-    }
-    
-    /* Barra de opciones responsiva */
-    .barra-opciones {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 20px 11px;
-        background-color: #fff;
         width: 80%;
-        max-width: 300px;
-        border-radius: 10px;
-        border: solid 1px var(--second-color);
+        max-width: 700px;
     }
-    .barra-opciones a {
-        background-color: #fff;
-        color: var(--text);
-        border: none;
-        padding: 10px;
-        cursor: pointer;
+    .menu-desplegable select {
+        width: 20%;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-usuarios {
+        width: 90%;
+        padding: 20px;
+        gap: 20px;
+    }
+    .menu-desplegable select {
+        width: 50%;
         font-size: 14px;
+    }
+    .horario-ver {
+        width: 95%;
+    }
+    .barra-opciones {
         width: 100%;
-        border-radius: 10px;
-        font-family: sans-serif;
-        text-align: center;
-        transition: all 0.3s ease;
     }
-    .barra-opciones a:hover {
-        background-color: #c5c5c5;
+}
+
+@media (max-width: 480px) {
+    .form-usuarios {
+        width: 95%;
+        padding: 15px;
     }
-    .barra-opciones a.activo {
-        background-color: var(--second-color);
-        color: #fff;
+    .menu-desplegable select {
+        width: 80%;
+        font-size: 13px;
     }
-    
-    /* Media queries para hacerlo más adaptable */
-    @media (max-width: 768px) {
-        .menu-desplegable select {
-            width: 80%;
-        }
-        .horario-ver {
-            width: 95%;
-        }
-        .form-usuarios {
-            width: 95%;
-        }
-        .barra-opciones {
-            width: 100%;
-        }
-    }
-    
+}
+
 
 }
