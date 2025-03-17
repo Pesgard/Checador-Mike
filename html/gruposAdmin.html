@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="/css/principal.css">
         <link href='https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css' rel='stylesheet'>
-        <title>Temario Administrador Añadir</title>
+        <title>Temario Administrador</title>
     </head>
     <body id="body">
         <div class="l-navbar" id="navbar">
@@ -29,7 +29,7 @@
                             <i class='bx bx-calendar-star nav__icon'></i>
                             <span class="nav__text">Horario</span>
                         </a>
-                        <a href="gruposAdmin.html" class="nav__link">
+                        <a href="gruposAdmin.html" class="nav__link  active">
                             <i class='bx bx-buildings nav__icon'></i>
                             <span class="nav__text">Grupos</span>
                         </a>
@@ -42,7 +42,7 @@
                             <span class="nav__text">Materia</span>
                         </a>
                         
-                        <a href="temariosAdmin.html" class="nav__link active">
+                        <a href="temariosAdmin.html" class="nav__link">
                             <i class='bx bx-bookmark nav__icon'></i>
                             <span class="nav__text">Temario</span>
                         </a>              
@@ -56,36 +56,50 @@
         </div>
 
         <section>
-            <div class="barra-opciones">
-                <a href="temariosAdmin.html">Editar</a>
-                <a href="#" class="activo">Agregar</a>
-            </div>
-            <form class="form-usuarios">
-                <h1>Seleccione el semestre al que pertenece la materia</h1>
+            
+            <div class="form-usuarios">
+
+                <!-- AQUI VAN LOS GRUPOS -->
+                <h1>Seleccione un grupo para modificar o agregue uno nuevo</h1>
                 <select name="" id="">
-                    <option value="">1er semestre</option>
-                    <option value="">2do semestre</option>
-                    <option value="">3er semestre</option>
-                    <option value="">4to semestre</option>
-                    <option value="">5to semestre</option>
-                    <option value="">6to semestre</option>
-                    <option value="">7mo semestre</option>
-                    <option value="">8vo semestre</option>
-                    <option value="">9no semestre</option>
+                    <option value="">
+                        401
+                    </option>
                 </select>
-                <h1>Seleccione la materia y cargue el temario</h1>
-                <select name="" id="">
-                    <option value="">NTIC</option>
-                </select>
-                <input type= "file" name="" id="">
-                <div class="busqueda" style="flex-direction: row-reverse;">
-                    <button class="boton-global">Guardar</button>
+                <input type="number" placeholder="Grupo nuevo">
+                <div class="busqueda"style="flex-direction: row-reverse;">
+                    <button class="boton-global">Agregar</button>
                     <button class="boton-global-rojo">Eliminar</button>
                 </div>
-            </form>
+                <!-- aqui va el edificio -->
+                <h1>Seleccione un aula o agregue una nueva</h1>
+                <select name="" id="">
+                    <option value="">
+                        Aula 1
+                    </option>
+                </select>
+                <input type="text" placeholder="Aula nueva">
+                <div class="busqueda"style="flex-direction: row-reverse;">
+                    <button class="boton-global">Agregar</button>
+                    <button class="boton-global-rojo">Eliminar</button>
+                </div>
+                
+                <!-- Aqui va el edificio -->
+                <h1>Seleccione un edificio o agregue uno nuevo</h1>
+                <select name="" id="">
+                    <option value="">
+                        B1
+                    </option>
+                </select>
+                <input type="text" placeholder="Edificio Nuevo">
+                <div class="busqueda"style="flex-direction: row-reverse;">
+                    <button class="boton-global">Agregar</button>
+                    <button class="boton-global-rojo">Eliminar</button>
+                </div>
+            </div>
         </section>
+        <br><br>
     </body>
 
-<script src="/js/barraOpciones.js"></script>
 <script src="/js/sidebar.js"></script>
 </html>
