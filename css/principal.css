@@ -433,5 +433,7 @@ a {
 
 
 /* ! Aqui ortega modifica los valores para que sea responsivo */
-@media (max-width: 600px) {
+@media (max-width: 480px) {
+
+
 }

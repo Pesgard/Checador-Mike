@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="/css/principal.css">
         <link href='https://cdn.jsdelivr.net/npm/boxicons@2.0.5/css/boxicons.min.css' rel='stylesheet'>
-        <title>Temario Administrador</title>
+        <title>Materias Administrador</title>
     </head>
     <body id="body">
         <div class="l-navbar" id="navbar">
@@ -33,12 +33,12 @@
                             <i class='bx bx-user nav__icon' ></i>
                             <span class="nav__text">Usuarios</span>
                         </a>
-                        <a href="materiasAdmin.html" class="nav__link">
+                        <a href="materiasAdmin.html" class="nav__link active">
                             <i class='bx bx-book-bookmark nav__icon' ></i>
                             <span class="nav__text">Materia</span>
                         </a>
                         
-                        <a href="temariosAdmin.html" class="nav__link active">
+                        <a href="temariosAdmin.html" class="nav__link">
                             <i class='bx bx-bookmark nav__icon'></i>
                             <span class="nav__text">Temario</span>
                         </a>              
@@ -53,10 +53,11 @@
 
         <section>
             <div class="barra-opciones">
-                <a href="#" class="activo">Editar</a>
-                <a href="temariosAdminAñadir.html">Agregar</a>
+                <a href="materiasAdmin.html">Editar</a>
+                <a href="#" class="activo">Agregar</a>
             </div>
-            <div class="form-usuarios">
+
+            <form action="#" class="form-usuarios">
                 <h1>Seleccione el semestre al que pertenece la materia</h1>
                 <select name="" id="">
                     <option value="">1er semestre</option>
@@ -69,19 +70,13 @@
                     <option value="">8vo semestre</option>
                     <option value="">9no semestre</option>
                 </select>
-                <h1>Seleccione la materia a la que quiera ver o editar el temario</h1>
-                <select name="" id="">
-                    <option value="">NTIC</option>
-                </select>
-                <input type= "file" name="" id="">
+                <input type="text" placeholder="Nombre de la materia">
                 <div class="busqueda" style="flex-direction: row-reverse;">
-                <button class="boton-global">Ver</button>
-                <button class="boton-global-rojo">Eliminar</button>
+                    <button class="boton-global">Guardar</button>
+
                 </div>
-            </div>
+            </form>
         </section>
     </body>
-
-<script src="/js/barraOpciones.js"></script>
 <script src="/js/sidebar.js"></script>
 </html>

@@ -53,10 +53,32 @@
 
         <section>
             <div class="barra-opciones">
-                <button>Ver</button>
-                <button>Agregar</button>
+                <a href="#" class="activo">Editar</a>
+                <a href="materiasAdminAñadir.html">Agregar</a>
             </div>
+            <form action="#" class="form-usuarios">
+                <h1>Seleccione el semestre al que pertenece la materia</h1>
+                <select name="" id="">
+                    <option value="">1er semestre</option>
+                    <option value="">2do semestre</option>
+                    <option value="">3er semestre</option>
+                    <option value="">4to semestre</option>
+                    <option value="">5to semestre</option>
+                    <option value="">6to semestre</option>
+                    <option value="">7mo semestre</option>
+                    <option value="">8vo semestre</option>
+                    <option value="">9no semestre</option>
+                </select>
+                <h1>Seleccione la materia que desea editar</h1>
+                <select name="" id="">
+                    <option value="">Lista de  materias dependiendo del semestre</option>
+                </select>
+                <div class="busqueda" style="flex-direction: row-reverse;">
+                    <button class="boton-global">Guardar</button>
+                    <button class="boton-global-rojo">Eliminar</button>
+                </div>
+            </form>
+        </section>
     </body>
-<script src="/js/barraOpciones.js"></script>
 <script src="/js/sidebar.js"></script>
 </html>
