@@ -14,7 +14,6 @@ import {
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { usuariosService } from '../services/supabaseService'
 
 export default function Login() {
   const [email, setEmail] = useState('')

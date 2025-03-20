@@ -17,7 +17,6 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material';
-import { Link } from 'react-router-dom';
 import { Usuario, usuariosService } from '../services/supabaseService';
 
 export default function UsuariosPage() {
@@ -32,7 +31,7 @@ export default function UsuariosPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [, setUsuarios] = useState<Usuario[]>([]);
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
 
   useEffect(() => {

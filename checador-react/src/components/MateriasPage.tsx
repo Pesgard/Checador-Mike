@@ -17,7 +17,6 @@ import {
   TextField,
   CircularProgress
 } from '@mui/material';
-import { Link } from 'react-router-dom';
 import { materiasService, carrerasService, Materia, Carrera } from '../services/supabaseService';
 
 export default function MateriasPage() {
