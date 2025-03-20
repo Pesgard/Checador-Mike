@@ -42,6 +42,8 @@ export default function GruposPage() {
 
         if (gruposData.length > 0) {
           setSelectedGroup(gruposData[0].id?.toString() || '');
+          setSelectedRoom(gruposData[0].classroom || ''); // Cargar aula asignada
+          setSelectedBuilding(gruposData[0].building || ''); // Cargar edificio asignado
         }
 
         const aulasData = await gruposService.getClassrooms();
@@ -66,7 +68,15 @@ export default function GruposPage() {
   }, []);
 
   const handleGroupChange = (event: SelectChangeEvent) => {
-    setSelectedGroup(event.target.value);
+    const groupId = event.target.value;
+    setSelectedGroup(groupId);
+
+    // Buscar el grupo seleccionado para cargar el aula y edificio asignados
+    const grupoSeleccionado = grupos.find(grupo => grupo.id?.toString() === groupId);
+    if (grupoSeleccionado) {
+      setSelectedRoom(grupoSeleccionado.classroom || ''); // Cargar aula asignada
+      setSelectedBuilding(grupoSeleccionado.building || ''); // Cargar edificio asignado
+    }
   };
 
   const handleRoomChange = (event: SelectChangeEvent) => {
@@ -119,8 +129,12 @@ export default function GruposPage() {
       setGrupos(gruposData);
       if (gruposData.length > 0) {
         setSelectedGroup(gruposData[0].id?.toString() || '');
+        setSelectedRoom(gruposData[0].classroom || ''); // Cargar aula asignada
+        setSelectedBuilding(gruposData[0].building || ''); // Cargar edificio asignado
       } else {
         setSelectedGroup('');
+        setSelectedRoom('');
+        setSelectedBuilding('');
       }
     } catch (err: any) {
       setError(err.message || 'Error al eliminar grupo');
@@ -281,34 +295,8 @@ export default function GruposPage() {
 
         {/* Sección de Aulas */}
         <Typography variant="h5" gutterBottom align="center" sx={{ mb: 3 }}>
-          Seleccione un aula o agregue una nueva
+          Agregar un aula nueva
         </Typography>
-
-        <FormControl fullWidth margin="normal">
-          <InputLabel>Aula</InputLabel>
-          <Select
-            value={selectedRoom}
-            label="Aula"
-            onChange={handleRoomChange}
-            disabled={aulas.length === 0}
-          >
-            {aulas.map((aula) => (
-              <MenuItem key={aula} value={aula}>
-                {aula}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <Button 
-          variant="contained"
-          onClick={handleAssignRoom}
-          disabled={!selectedGroup || !selectedRoom || loading}
-          sx={{ mt: 1, mb: 2 }}
-          fullWidth
-        >
-          Asignar aula al grupo seleccionado
-        </Button>
 
         <TextField
           fullWidth
@@ -318,17 +306,15 @@ export default function GruposPage() {
           onChange={(e) => setNewRoom(e.target.value)}
         />
 
-        <Grid container justifyContent="flex-end" spacing={2} sx={{ mt: 1, mb: 4 }}>
-          <Grid item>
-            <Button
-              variant="contained"
-              onClick={handleAddRoom}
-              disabled={!newRoom || loading}
-            >
-              Agregar
-            </Button>
-          </Grid>
-        </Grid>
+        <Button 
+          variant="contained"
+          onClick={handleAddRoom}
+          disabled={!newRoom || loading}
+          sx={{ mt: 1, mb: 2 }}
+          fullWidth
+        >
+          Asignar aula al grupo seleccionado
+        </Button>
 
         {/* Sección de Edificios */}
         <Typography variant="h5" gutterBottom align="center" sx={{ mb: 3 }}>

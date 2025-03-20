@@ -18,6 +18,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import { Usuario, usuariosService } from '../services/supabaseService';
+import { supabase } from '../lib/supabase';
 
 export default function UsuariosPage() {
   const [tabValue, setTabValue] = useState(0);
@@ -27,6 +28,7 @@ export default function UsuariosPage() {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<string>('Alumno');
   const [searchAccount, setSearchAccount] = useState('');
+  const [numeroCuenta, setNumeroCuenta] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +73,7 @@ export default function UsuariosPage() {
     setRole('Alumno');
     setSearchAccount('');
     setSelectedUser(null);
+    setNumeroCuenta('');
   };
 
   const handleSearch = async () => {
@@ -81,7 +84,26 @@ export default function UsuariosPage() {
 
     setLoading(true);
     try {
-      // Buscar el usuario por ID
+      // Primero intentamos buscar por número de cuenta
+      const { data: usersByNumCuenta } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('numero_cuenta', searchAccount)
+        .single();
+
+      if (usersByNumCuenta) {
+        setSelectedUser(usersByNumCuenta);
+        setAccountNumber(usersByNumCuenta.id?.toString() || '');
+        setUserName(usersByNumCuenta.name);
+        setEmail(usersByNumCuenta.email || '');
+        setPassword(''); // Dejar el campo de contraseña vacío
+        setRole(usersByNumCuenta.role || 'Alumno');
+        setNumeroCuenta(usersByNumCuenta.numero_cuenta || '');
+        setSuccess('Usuario encontrado');
+        return;
+      }
+
+      // Si no se encuentra por número de cuenta, intentamos por ID
       const userId = Number(searchAccount);
       const user = await usuariosService.getById(userId);
       
@@ -89,13 +111,13 @@ export default function UsuariosPage() {
         throw new Error('Usuario no encontrado');
       }
       
-      // Llenar el formulario con los datos del usuario
       setSelectedUser(user);
       setAccountNumber(user.id?.toString() || '');
       setUserName(user.name);
       setEmail(user.email || '');
-      setPassword(user.password || '');
+      setPassword(''); // Dejar el campo de contraseña vacío
       setRole(user.role || 'Alumno');
+      setNumeroCuenta(user.numero_cuenta || '');
       
       setSuccess('Usuario encontrado');
     } catch (err: any) {
@@ -123,15 +145,26 @@ export default function UsuariosPage() {
         name: userName,
         email,
         role: role as 'Alumno' | 'Jefe de grupo' | 'Coordinador' | 'Maestro' | 'Administrador',
+        numero_cuenta: numeroCuenta
       };
       
-      // Solo actualizar la contraseña si se modificó
-      if (password && password !== '********') {
+      // Solo incluir la contraseña si se ha ingresado una nueva
+      if (password.trim() !== '') {
         updatedUser.password = password;
       }
       
       await usuariosService.update(Number(accountNumber), updatedUser);
       setSuccess('Usuario actualizado correctamente');
+      
+      // Actualizar el selectedUser con los nuevos datos
+      setSelectedUser({
+        ...selectedUser,
+        ...updatedUser,
+        id: Number(accountNumber)
+      });
+      
+      // Limpiar el campo de contraseña después de guardar
+      setPassword('');
     } catch (err: any) {
       setError('Error al guardar usuario: ' + err.message);
     } finally {
@@ -174,6 +207,7 @@ export default function UsuariosPage() {
         email,
         password,
         role: role as 'Alumno' | 'Jefe de grupo' | 'Coordinador' | 'Maestro' | 'Administrador',
+        numero_cuenta: numeroCuenta
       };
       
       await usuariosService.create(newUser);
@@ -209,7 +243,7 @@ export default function UsuariosPage() {
       {tabValue === 0 ? (
         <Paper sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
           <Typography variant="h5" gutterBottom align="center">
-            Para poder ver o editar un usuario es necesario contar con un numero de cuenta
+            Para poder ver o editar un usuario es necesario contar con un número de cuenta o ID
           </Typography>
 
           <Grid container spacing={2} sx={{ mb: 4, mt: 2 }}>
@@ -217,7 +251,6 @@ export default function UsuariosPage() {
               <TextField
                 fullWidth
                 label="Número de cuenta"
-                type="number"
                 value={searchAccount}
                 onChange={(e) => setSearchAccount(e.target.value)}
               />
@@ -242,11 +275,18 @@ export default function UsuariosPage() {
             <TextField
               fullWidth
               margin="normal"
-              label="Número de cuenta"
-              type="number"
+              label="ID"
               value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
-              disabled={true} // No permitir cambiar el ID
+              disabled={true}
+            />
+            
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Número de cuenta"
+              value={numeroCuenta}
+              onChange={(e) => setNumeroCuenta(e.target.value)}
+              disabled={!selectedUser}
             />
             
             <TextField
@@ -276,7 +316,7 @@ export default function UsuariosPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={!selectedUser}
-              helperText="Deje en blanco para mantener la misma contraseña"
+              helperText="Dejar en blanco para mantener la contraseña actual"
             />
             
             <FormControl fullWidth margin="normal">
@@ -321,6 +361,15 @@ export default function UsuariosPage() {
           </Typography>
 
           <Box component="form" sx={{ mt: 3 }}>
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Número de Cuenta"
+              value={numeroCuenta}
+              onChange={(e) => setNumeroCuenta(e.target.value)}
+              helperText="Este campo es opcional"
+            />
+            
             <TextField
               fullWidth
               margin="normal"

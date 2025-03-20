@@ -14,9 +14,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Tabs,
-  Tab,
-  SelectChangeEvent,
   Grid,
   Snackbar,
   Alert,
@@ -33,6 +30,8 @@ interface HorarioData {
   maestro: string;
   asistencia: boolean;
   horarioId?: number;
+  aula?: string;
+  edificio?: string;
 }
 
 // Horas y días para el horario
@@ -46,7 +45,6 @@ const formatHora = (hora: string) => {
 };
 
 export default function HorarioPage() {
-  const [tabValue, setTabValue] = useState(0);
   const [selectedGrupo, setSelectedGrupo] = useState<string>('');
   const [grupos, setGrupos] = useState<Grupo[]>([]);
   const [horarioData, setHorarioData] = useState<Map<string, HorarioData>>(new Map());
@@ -55,13 +53,17 @@ export default function HorarioPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [maestros, setMaestros] = useState<Usuario[]>([]);
+  const [selectedMaestro, setSelectedMaestro] = useState<string>('');
+  const [horarios, setHorarios] = useState<HorarioMaestro[]>([]);
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
+  const handleChangeGrupo = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedGrupo(event.target.value);
+    setSelectedMaestro('');
   };
 
-  const handleGrupoChange = (event: SelectChangeEvent) => {
-    setSelectedGrupo(event.target.value);
+  const handleChangeMaestro = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedMaestro(event.target.value);
+    setSelectedGrupo('');
   };
 
   const handleCloseAlert = () => {
@@ -103,32 +105,42 @@ export default function HorarioPage() {
       }
     };
 
+    const fetchData = async () => {
+      try {
+        const usuariosData = await usuariosService.getAll();
+        const maestrosData = usuariosData.filter(usuario => usuario.role === 'Maestro');
+        setMaestros(maestrosData);
+
+        const materiasData = await materiasService.getAll();
+        setMaterias(materiasData);
+
+        const horariosData = await horariosService.getAll();
+        console.log("Horarios cargados:", horariosData);
+        setHorarios(horariosData);
+      } catch (err: any) {
+        console.error("Error al cargar datos:", err);
+        setError(err.message || 'Error al cargar datos');
+      }
+    };
+
     fetchGrupos();
     fetchMaterias();
     fetchMaestros();
+    fetchData();
   }, []);
 
-  // Cargar el horario cuando se selecciona un grupo
+  // Actualizar el useEffect para el grupo
   useEffect(() => {
     if (!selectedGrupo) return;
 
-    const fetchHorario = async () => {
+    const fetchHorarioGrupo = async () => {
       setLoading(true);
       try {
         const data = await horariosService.getAll();
+        const horariosGrupo = data.filter(h => h.grupo_id.toString() === selectedGrupo);
         
-        // Filtrar los horarios del grupo seleccionado
-        const horarios = data.filter((h: HorarioMaestro) => h.grupo_id === Number(selectedGrupo));
-        
-        // Crear el mapa de horarios
         const horarioMap = new Map<string, HorarioData>();
         
-        // Log para depuración
-        console.log("Horarios del grupo:", horarios);
-        console.log("Materias disponibles:", materias);
-        console.log("Maestros disponibles:", maestros);
-        
-        // Inicializar todas las celdas del horario
         DIAS.forEach(dia => {
           HORAS.forEach(hora => {
             const key = `${dia}-${hora}`;
@@ -142,56 +154,116 @@ export default function HorarioPage() {
           });
         });
         
-        // Llenar con los datos existentes
-        horarios.forEach((horario: HorarioMaestro) => {
+        horariosGrupo.forEach((horario: HorarioMaestro) => {
           const materia = materias.find(m => m.id === horario.materia_id);
           const maestro = maestros.find(m => m.id === horario.maestro_id);
+          const grupo = grupos.find(g => g.id === horario.grupo_id);
           
-          console.log(`Procesando horario: Día=${horario.dia}, Hora=${horario.hora}, Materia ID=${horario.materia_id}, Maestro ID=${horario.maestro_id}`);
-          console.log(`Materia encontrada:`, materia);
-          console.log(`Maestro encontrado:`, maestro);
-          
-          if (materia && maestro && horario.dia && horario.hora) {
+          if (materia && maestro && grupo && horario.dia && horario.hora) {
             const key = `${horario.dia}-${horario.hora}`;
-            console.log(`Agregando horario a la celda ${key}`);
-            
             horarioMap.set(key, {
               dia: horario.dia,
               hora: horario.hora,
-              materia: materia.name || '',
+              materia: materia.name,
               maestro: maestro.name,
               asistencia: horario.asistencia || false,
-              horarioId: horario.id
+              horarioId: horario.id,
+              aula: grupo.classroom,
+              edificio: grupo.building
             });
-          } else {
-            console.warn(`No se pudo asociar el horario: 
-              Materia: ${materia ? 'Sí' : 'No'}, 
-              Maestro: ${maestro ? 'Sí' : 'No'}, 
-              Día: ${horario.dia ? 'Sí' : 'No'}, 
-              Hora: ${horario.hora ? 'Sí' : 'No'}`);
-          }
-        });
-        
-        // Log del mapa final
-        console.log("Mapa de horarios final:");
-        horarioMap.forEach((value, key) => {
-          if (value.materia) {
-            console.log(`${key}: ${value.materia} - ${value.maestro} (${value.asistencia ? 'Presente' : 'Ausente'})`);
           }
         });
         
         setHorarioData(horarioMap);
-        setSuccess('Horario cargado correctamente');
+        setSuccess('Horario del grupo cargado correctamente');
       } catch (err: any) {
-        console.error("Error cargando horarios:", err);
-        setError('Error al cargar horario: ' + err.message);
+        console.error("Error cargando horarios del grupo:", err);
+        setError('Error al cargar horario del grupo: ' + err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchHorario();
-  }, [selectedGrupo, materias, maestros]);
+    fetchHorarioGrupo();
+  }, [selectedGrupo, materias, maestros, grupos]);
+
+  // Actualizar el useEffect para el maestro
+  useEffect(() => {
+    if (!selectedMaestro) return;
+
+    const fetchHorarioMaestro = async () => {
+      setLoading(true);
+      try {
+        const data = await horariosService.getAll();
+        const horariosMaestro = data.filter(h => h.maestro_id.toString() === selectedMaestro);
+        
+        const horarioMap = new Map<string, HorarioData>();
+        
+        DIAS.forEach(dia => {
+          HORAS.forEach(hora => {
+            const key = `${dia}-${hora}`;
+            horarioMap.set(key, {
+              dia,
+              hora,
+              materia: '',
+              maestro: '',
+              asistencia: false
+            });
+          });
+        });
+        
+        horariosMaestro.forEach((horario: HorarioMaestro) => {
+          const materia = materias.find(m => m.id === horario.materia_id);
+          const grupo = grupos.find(g => g.id === horario.grupo_id);
+          
+          if (materia && grupo && horario.dia && horario.hora) {
+            const key = `${horario.dia}-${horario.hora}`;
+            horarioMap.set(key, {
+              dia: horario.dia,
+              hora: horario.hora,
+              materia: materia.name,
+              maestro: grupo.name,
+              asistencia: horario.asistencia || false,
+              horarioId: horario.id,
+              aula: grupo.classroom,
+              edificio: grupo.building
+            });
+          }
+        });
+        
+        setHorarioData(horarioMap);
+        setSuccess('Horario del maestro cargado correctamente');
+      } catch (err: any) {
+        console.error("Error cargando horarios del maestro:", err);
+        setError('Error al cargar horario del maestro: ' + err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHorarioMaestro();
+  }, [selectedMaestro, materias, grupos]);
+
+  // Limpiar horarioData cuando se cambia de selección
+  useEffect(() => {
+    if (selectedGrupo) {
+      setSelectedMaestro('');
+    } else if (selectedMaestro) {
+      setSelectedGrupo('');
+    }
+    setHorarioData(new Map());
+  }, [selectedGrupo, selectedMaestro]);
+
+  // Filtrar horarios por maestro
+  const filteredHorarios = selectedMaestro
+    ? horarios.filter(horario => horario.maestro_id.toString() === selectedMaestro)
+    : [];
+
+  // Función para obtener el nombre de la materia
+  const getMateriaNombre = (materiaId: number) => {
+    const materia = materias.find(m => m.id === materiaId);
+    return materia ? materia.name : 'Materia no encontrada';
+  };
 
   const handleToggleAsistencia = async (dia: string, hora: string) => {
     const key = `${dia}-${hora}`;
@@ -223,21 +295,116 @@ export default function HorarioPage() {
     }
   };
 
+  // Función para obtener el rango de horas necesarias
+  const getHorasNecesarias = (horarioMap: Map<string, HorarioData>): string[] => {
+    let horasConClase = new Set<string>();
+    
+    // Recolectar todas las horas que tienen clases
+    horarioMap.forEach((value) => {
+      if (value.materia) {
+        horasConClase.add(value.hora);
+      }
+    });
+
+    // Convertir a array y ordenar
+    const horasOrdenadas = Array.from(horasConClase).sort((a, b) => {
+      return parseInt(a.split(':')[0]) - parseInt(b.split(':')[0]);
+    });
+
+    if (horasOrdenadas.length === 0) return HORAS;
+
+    // Obtener la primera y última hora
+    const primeraHora = parseInt(horasOrdenadas[0].split(':')[0]);
+    const ultimaHora = parseInt(horasOrdenadas[horasOrdenadas.length - 1].split(':')[0]);
+
+    // Crear array con el rango completo de horas
+    return HORAS.filter(hora => {
+      const horaActual = parseInt(hora.split(':')[0]);
+      return horaActual >= primeraHora && horaActual <= ultimaHora;
+    });
+  };
+
+  // Modificar la sección de la tabla para grupos y maestros
+  const renderHorarioTable = () => {
+    // Obtener el grupo seleccionado para mostrar su información
+    const grupoSeleccionado = selectedGrupo ? grupos.find(g => g.id?.toString() === selectedGrupo) : null;
+
+    return (
+      <TableContainer component={Paper} sx={{ mb: 4 }}>
+        {/* Agregar encabezado con información del grupo si estamos en vista de grupo */}
+        {selectedGrupo && grupoSeleccionado && (
+          <Box sx={{ p: 2, bgcolor: 'primary.main', color: 'white' }}>
+            <Typography variant="h6" align="center">
+              Aula: {grupoSeleccionado.classroom} - Edificio: {grupoSeleccionado.building}
+            </Typography>
+          </Box>
+        )}
+        
+        <Table sx={{ minWidth: 650 }}>
+          <TableHead>
+            <TableRow sx={{ bgcolor: 'primary.light' }}>
+              <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Hora</TableCell>
+              {DIAS.map((dia) => (
+                <TableCell key={dia} align="center" sx={{ fontWeight: 'bold', color: 'white' }}>
+                  {dia}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {getHorasNecesarias(horarioData).map((hora) => (
+              <TableRow key={hora} hover>
+                <TableCell component="th" scope="row" sx={{ fontWeight: 'bold' }}>
+                  {formatHora(hora)}
+                </TableCell>
+                {DIAS.map((dia) => {
+                  const key = `${dia}-${hora}`;
+                  const celda = horarioData.get(key);
+                  
+                  return (
+                    <TableCell 
+                      key={key} 
+                      align="center" 
+                      sx={{ 
+                        position: 'relative',
+                        bgcolor: celda?.materia ? 'rgba(200, 230, 255, 0.2)' : 'inherit',
+                        padding: '16px',
+                        border: celda?.materia ? '1px solid #e0e0e0' : 'inherit'
+                      }}
+                    >
+                      {celda?.materia ? (
+                        <>
+                          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                            {celda.materia}
+                          </Typography>
+                          <Typography variant="caption" display="block">
+                            {celda.maestro}
+                          </Typography>
+                          {/* Mostrar aula y edificio solo en vista de maestros */}
+                          {selectedMaestro && (
+                            <Typography variant="caption" display="block" color="text.secondary">
+                              Aula: {celda.aula} - Edificio: {celda.edificio}
+                            </Typography>
+                          )}
+                        </>
+                      ) : (
+                        <Typography variant="caption" color="textSecondary">
+                          Sin clase
+                        </Typography>
+                      )}
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
+
   return (
     <Box sx={{ p: 3 }}>
-      <Paper sx={{ mb: 3, borderRadius: 1, overflow: 'hidden' }}>
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          variant="fullWidth"
-          textColor="primary"
-          indicatorColor="primary"
-        >
-          <Tab label="Ver" />
-          <Tab label="Agregar" component={Link} to="/admin/horario/add" />
-        </Tabs>
-      </Paper>
-
       <Typography variant="h4" gutterBottom align="center">
         Horario de Clases
       </Typography>
@@ -249,12 +416,28 @@ export default function HorarioPage() {
             <Select
               value={selectedGrupo}
               label="Grupo"
-              onChange={handleGrupoChange}
+              onChange={handleChangeGrupo}
               disabled={loading}
             >
               {grupos.map((grupo) => (
                 <MenuItem key={grupo.id} value={grupo.id?.toString() || ''}>
                   {grupo.name} - {grupo.classroom} ({grupo.building})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <FormControl fullWidth>
+            <InputLabel>Seleccionar Maestro</InputLabel>
+            <Select
+              value={selectedMaestro}
+              label="Seleccionar Maestro"
+              onChange={handleChangeMaestro}
+            >
+              {maestros.map((maestro) => (
+                <MenuItem key={maestro.id} value={maestro.id?.toString()}>
+                  {maestro.name}
                 </MenuItem>
               ))}
             </Select>
@@ -268,95 +451,7 @@ export default function HorarioPage() {
         </Box>
       )}
 
-      {selectedGrupo && !loading && (
-        <>
-          <TableContainer component={Paper} sx={{ mb: 4 }}>
-            <Table sx={{ minWidth: 650 }}>
-              <TableHead>
-                <TableRow sx={{ bgcolor: 'primary.light' }}>
-                  <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Hora</TableCell>
-                  {DIAS.map((dia) => (
-                    <TableCell key={dia} align="center" sx={{ fontWeight: 'bold', color: 'white' }}>{dia}</TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {HORAS.map((hora) => (
-                  <TableRow key={hora} hover>
-                    <TableCell component="th" scope="row" sx={{ fontWeight: 'bold' }}>{formatHora(hora)}</TableCell>
-                    {DIAS.map((dia) => {
-                      const key = `${dia}-${hora}`;
-                      const celda = horarioData.get(key);
-                      
-                      return (
-                        <TableCell 
-                          key={key} 
-                          align="center" 
-                          sx={{ 
-                            position: 'relative',
-                            bgcolor: celda?.materia ? 'rgba(200, 230, 255, 0.2)' : 'inherit',
-                            padding: '16px',
-                            border: celda?.materia ? '1px solid #e0e0e0' : 'inherit'
-                          }}
-                        >
-                          {celda?.materia ? (
-                            <>
-                              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                                {celda.materia}
-                              </Typography>
-                              <Typography variant="caption" display="block" sx={{ mb: 1 }}>
-                                {celda.maestro}
-                              </Typography>
-                              {celda.maestro && (
-                                <Button
-                                  variant={celda.asistencia ? "contained" : "outlined"}
-                                  color={celda.asistencia ? "success" : "error"}
-                                  size="small"
-                                  onClick={() => handleToggleAsistencia(dia, hora)}
-                                  sx={{ mt: 1 }}
-                                >
-                                  {celda.asistencia ? "Presente" : "Ausente"}
-                                </Button>
-                              )}
-                            </>
-                          ) : (
-                            <Typography variant="caption" color="textSecondary">
-                              Sin clase
-                            </Typography>
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          
-          <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Estadísticas
-            </Typography>
-            <Typography variant="body2">
-              {
-                (() => {
-                  let total = 0;
-                  let presentes = 0;
-                  
-                  horarioData.forEach(celda => {
-                    if (celda.materia) {
-                      total++;
-                      if (celda.asistencia) presentes++;
-                    }
-                  });
-                  
-                  return `Clases totales: ${total}, Asistencias: ${presentes}, Ausencias: ${total - presentes}`;
-                })()
-              }
-            </Typography>
-          </Box>
-        </>
-      )}
+      {(selectedGrupo || selectedMaestro) && !loading && renderHorarioTable()}
 
       {/* Alertas de éxito y error */}
       <Snackbar open={!!error} autoHideDuration={6000} onClose={handleCloseAlert}>

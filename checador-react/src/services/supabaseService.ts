@@ -7,6 +7,7 @@ export interface Usuario {
   email: string;
   password: string;
   role: 'Alumno' | 'Jefe de grupo' | 'Coordinador' | 'Maestro' | 'Administrador';
+  numero_cuenta?: string;
 }
 
 export interface Grupo {
@@ -64,7 +65,13 @@ export const usuariosService = {
   async create(usuario: Usuario): Promise<Usuario> {
     const { data, error } = await supabase
       .from('usuarios')
-      .insert(usuario)
+      .insert({
+        name: usuario.name,
+        email: usuario.email,
+        password: usuario.password,
+        role: usuario.role,
+        numero_cuenta: usuario.numero_cuenta
+      })
       .select()
       .single();
     

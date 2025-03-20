@@ -27,6 +27,7 @@ export default function MateriasPage() {
   const [selectedCarrera, setSelectedCarrera] = useState<string>('');
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [carreras, setCarreras] = useState<Carrera[]>([]);
+  const [semestresDisponibles, setSemestresDisponibles] = useState<string[]>([]);
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +44,8 @@ export default function MateriasPage() {
         
         if (carrerasData.length > 0) {
           setSelectedCarrera(carrerasData[0].id?.toString() || '');
+          // Cargar semestres de la carrera seleccionada
+          setSemestresDisponibles(Array.from({ length: carrerasData[0].semestres }, (_, i) => (i + 1).toString()));
         }
         
         // Cargar materias por semestre
@@ -86,8 +89,15 @@ export default function MateriasPage() {
     setSelectedSubject(event.target.value);
   };
 
-  const handleCarreraChange = (event: SelectChangeEvent) => {
-    setSelectedCarrera(event.target.value);
+  const handleCarreraChange = async (event: SelectChangeEvent) => {
+    const carreraId = event.target.value;
+    setSelectedCarrera(carreraId);
+    
+    // Obtener la carrera seleccionada para cargar los semestres
+    const carreraSeleccionada = carreras.find(c => c.id?.toString() === carreraId);
+    if (carreraSeleccionada) {
+      setSemestresDisponibles(Array.from({ length: carreraSeleccionada.semestres }, (_, i) => (i + 1).toString()));
+    }
   };
 
   const handleSave = async () => {
@@ -171,9 +181,6 @@ export default function MateriasPage() {
     setSuccess(null);
   };
 
-  // Generar opciones para los semestres (1-9)
-  const semestres = Array.from({ length: 9 }, (_, i) => (i + 1).toString());
-
   return (
     <Box sx={{ p: 3 }}>
       <Paper sx={{ mb: 3, borderRadius: 1, overflow: 'hidden' }}>
@@ -202,7 +209,7 @@ export default function MateriasPage() {
               label="Semestre"
               onChange={handleSemesterChange}
             >
-              {semestres.map((semestre) => (
+              {semestresDisponibles.map((semestre) => (
                 <MenuItem key={semestre} value={semestre}>
                   {semestre}° semestre
                 </MenuItem>
@@ -289,7 +296,7 @@ export default function MateriasPage() {
               label="Semestre"
               onChange={handleSemesterChange}
             >
-              {semestres.map((semestre) => (
+              {semestresDisponibles.map((semestre) => (
                 <MenuItem key={semestre} value={semestre}>
                   {semestre}° semestre
                 </MenuItem>
