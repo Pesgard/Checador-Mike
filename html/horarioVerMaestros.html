@@ -58,57 +58,65 @@
         <section>
             <div class="barra-opciones" style="width: 40%;">
                 <a href="horarioAdmin.html">Ver Grupos</a>
-                <a href="horarioVerMaestros.html">Ver Maestros</a>
-                <a href="" class="activo">Agregar Grupo</a>
+                <a href="" class="activo">Ver Maestros</a>
+                <a href="horarioAdminAñadir.html">Agregar Grupo</a>
                 <a href="horarioAdminAñadirMaestro.html">Agregar Maestro</a>
             </div>
 
-            <form action="" class="form-usuarios">
-
-                <h1>Seleccione el grupo al que pertenece el horario</h1>
-                <select name="" id="">
-                    <option value="1">1</option>
+            <div class="menu-desplegable">
+                <h1>Seleccione el horario del maestro que quiera ver</h1>
+                <select name="maestro" id="">
+                    <option value="401">Mike</option>
                 </select>
-
-                <h1>Seleccione el edificio al que pertenece el horario</h1>
-                    <select name="" id="">
-                        <option value="1">1</option>
-                    </select>
-
-                <h1>Seleccione el aula al que pertenece el horario</h1>
+            </div>
+            <div class="horario-ver">
+                <table>
+                    <tr>
+                        <th colspan="3">HORARIO DE MIGUEL MENDIVIL</th>
+                    </tr>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Materias</th>
+                        <th>Aula</th>
+                    </tr>
+                    <tr>
+                        <td>08:00 - 09:00</td>
+                        <td>Materia 1</td>
+                        <td>Aula 1</td>
+                    </tr>
+                    <tr>
+                        <td>09:00 - 10:00</td>
+                        <td>Materia 2</td>
+                        <td>Aula 2</td>
+                    </tr>
+                    <tr>
+                        <td>10:00 - 11:00</td>
+                        <td>Materia 3</td>
+                        <td>Aula 3</td>
+                    </tr>
+                    <!-- Agregar más filas según sea necesario -->
+                </table>
+            </div><br>
+            <div class="form-usuarios" style="background: none; align-items: center;">
+                <button class="boton-global-rojo" style="width: 60%;">Elimnar horario</button>
+            </div>
+            <br><br>
+            <form class="form-usuarios">
+                <h1>Checador de asistencia de los maestros</h1>
+                <input type="date">
+                <h1>Seleccione la hora</h1>
                 <select name="" id="">
-                    <option value="">Aula 1</option>
+                    <option value="">13:00 - 14:00</option>
                 </select>
-
-                <h1>Seleccione la cantidad de clases que tendra el horario</h1>
-                <select name="" id="">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                </select>
-
-                <!-- Esta parte sera dinamica dependiendo de la cantidad de horas -->
-                <div class="busqueda">
-                    <input type="text" placeholder="Hora de inicio">
-                    <h1>A</h1>
-                    <input type="text" name="" id="" placeholder="Hora de fin">
-                </div>   
-                <h1>Seleccione el maestro y la materia que imparte</h1>
-                <select name="" id="">
-                    <option value="">Jesus Miguel mendivil</option>
-                </select>
-                <select name="" id="">
-                    <option value="">NTIC</option>
-                </select>
-                <!-- Aqui acaba -->
-
-                <button class="boton-global">Crear Horario</button>
+                <h1>el maestro asistio?</h1>
+                <div class="check">
+                    <label for="">Marque la casilla si el maestro asistio</label>
+                    <input type="checkbox">
+                </div>
+                    <button class="boton-global">Guardar</button>
             </form>
-        </section><br>
+            <br>
+        </section>
     </body>
 
 <script src="../js/sidebar.js"></script>

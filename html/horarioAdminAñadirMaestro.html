@@ -59,27 +59,17 @@
             <div class="barra-opciones" style="width: 40%;">
                 <a href="horarioAdmin.html">Ver Grupos</a>
                 <a href="horarioVerMaestros.html">Ver Maestros</a>
-                <a href="" class="activo">Agregar Grupo</a>
-                <a href="horarioAdminAñadirMaestro.html">Agregar Maestro</a>
+                <a href="horarioAdminAñadir.html">Agregar Grupo</a>
+                <a href="#" class="activo">Agregar Maestro</a>
             </div>
 
             <form action="" class="form-usuarios">
 
-                <h1>Seleccione el grupo al que pertenece el horario</h1>
+                <!--! Cada input debera ser dinamico dependiendo de la cantidad de horas -->
+                <h1>Seleccione el maestro al que pertenece el horario</h1>
                 <select name="" id="">
-                    <option value="1">1</option>
+                    <option value="1">miguel</option>
                 </select>
-
-                <h1>Seleccione el edificio al que pertenece el horario</h1>
-                    <select name="" id="">
-                        <option value="1">1</option>
-                    </select>
-
-                <h1>Seleccione el aula al que pertenece el horario</h1>
-                <select name="" id="">
-                    <option value="">Aula 1</option>
-                </select>
-
                 <h1>Seleccione la cantidad de clases que tendra el horario</h1>
                 <select name="" id="">
                     <option value="1">1</option>
@@ -91,16 +81,21 @@
                     <option value="7">7</option>
                 </select>
 
+
+                <h1>Seleccione las aulas donde se impartira cada materia</h1>
+                <select name="" id="">
+                    <option value="">Aula 1</option>
+                </select>
+
+
                 <!-- Esta parte sera dinamica dependiendo de la cantidad de horas -->
                 <div class="busqueda">
                     <input type="text" placeholder="Hora de inicio">
                     <h1>A</h1>
                     <input type="text" name="" id="" placeholder="Hora de fin">
                 </div>   
-                <h1>Seleccione el maestro y la materia que imparte</h1>
-                <select name="" id="">
-                    <option value="">Jesus Miguel mendivil</option>
-                </select>
+                <h1>Seleccione las materias que impartira el maestro</h1>
+                
                 <select name="" id="">
                     <option value="">NTIC</option>
                 </select>
