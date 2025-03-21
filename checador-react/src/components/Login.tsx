@@ -14,6 +14,7 @@ import {
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { authService } from '../services/supabaseService'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -41,23 +42,31 @@ export default function Login() {
       if (authError) {
         // Si falla la autenticación con Supabase Auth, intentamos con la tabla de usuarios
         try {
-          // Buscar usuario por email
-          const { data: usuarios, error: dbError } = await supabase
+          // Buscar usuario por email y contraseña
+          const { data: usuario, error: dbError } = await supabase
             .from('usuarios')
             .select('*')
             .eq('email', email)
-            .eq('password', password) // Nota: En producción, las contraseñas deberían estar hasheadas
+            .eq('password', password)
             .single();
           
-          if (dbError || !usuarios) {
+          if (dbError || !usuario) {
             throw new Error('Credenciales inválidas');
           }
           
           // Simular sesión con el usuario encontrado
-          localStorage.setItem('user', JSON.stringify(usuarios));
+          localStorage.setItem('user', JSON.stringify(usuario));
           
-          // Redireccionar al dashboard
-          navigate('/admin');
+          // Redireccionar según el rol
+          switch(usuario.role) {
+            case 'Jefe_de_Grupo':
+              navigate('/jefe/horario')
+              break
+            case 'Administrador':
+            default:
+              navigate('/admin')
+              break
+          }
           return;
         } catch (dbErr: any) {
           setError('Email o contraseña incorrectos');
@@ -65,8 +74,27 @@ export default function Login() {
         }
       }
       
-      // Successful login, navigate to admin menu
-      navigate('/admin')
+      // Si la autenticación con Supabase Auth fue exitosa, obtener el rol
+      const { data: userData, error: roleError } = await supabase
+        .from('usuarios')
+        .select('role')
+        .eq('email', email)
+        .single();
+      
+      if (roleError || !userData) {
+        throw new Error('No se encontró información del usuario');
+      }
+
+      // Redireccionar según el rol
+      switch(userData.role) {
+        case 'Jefe_de_Grupo':
+          navigate('/jefe/horario')
+          break
+        case 'Administrador':
+        default:
+          navigate('/admin')
+          break
+      }
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión')
     } finally {

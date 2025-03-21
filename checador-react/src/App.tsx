@@ -14,6 +14,10 @@ import HorarioPage from './components/HorarioPage'
 import MateriasPage from './components/MateriasPage'
 import CarrerasPage from './components/CarrerasPage'
 import HorariosPage from './components/HorariosPage'
+import JefeHorarioPage from './components/JefeHorarioPage'
+import ChecadorHorarioPage from './components/ChecadorHorarioPage'
+import JefeLayout from './components/JefeLayout'
+import BuscarMaestroPage from './components/BuscarMaestroPage'
 import './App.css'
 
 // Crear un tema personalizado
@@ -56,7 +60,14 @@ function App() {
                   <Route path="/admin/materias" element={<MateriasPage />} />
                   <Route path="/admin/carreras" element={<CarrerasPage />} />
                   <Route path="/admin/temarios" element={<TemarioPage />} />
+                  <Route path="/admin/checador-horario" element={<ChecadorHorarioPage />} />
                 </Route>
+              </Route>
+              
+              {/* Rutas de Jefe de Grupo */}
+              <Route element={<JefeLayout />}>
+                <Route path="/jefe/horario" element={<JefeHorarioPage />} />
+                <Route path="/jefe/buscar" element={<BuscarMaestroPage />} />
               </Route>
               
               {/* Catch-all route */}

@@ -17,7 +17,7 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material';
-import { Usuario, usuariosService } from '../services/supabaseService';
+import { Usuario, usuariosService, UserRole } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
 
 export default function UsuariosPage() {
@@ -26,7 +26,7 @@ export default function UsuariosPage() {
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<string>('Alumno');
+  const [role, setRole] = useState<UserRole>('Alumno');
   const [searchAccount, setSearchAccount] = useState('');
   const [numeroCuenta, setNumeroCuenta] = useState('');
   
@@ -35,6 +35,14 @@ export default function UsuariosPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [, setUsuarios] = useState<Usuario[]>([]);
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
+
+  const roles: UserRole[] = [
+    'Alumno',
+    'Jefe_de_Grupo',
+    'Coordinador',
+    'Maestro',
+    'Administrador'
+  ];
 
   useEffect(() => {
     // Cargar la lista de usuarios al iniciar
@@ -62,7 +70,7 @@ export default function UsuariosPage() {
   };
 
   const handleRoleChange = (event: SelectChangeEvent) => {
-    setRole(event.target.value);
+    setRole(event.target.value as UserRole);
   };
 
   const clearForm = () => {
@@ -144,7 +152,7 @@ export default function UsuariosPage() {
       const updatedUser: Partial<Usuario> = {
         name: userName,
         email,
-        role: role as 'Alumno' | 'Jefe de grupo' | 'Coordinador' | 'Maestro' | 'Administrador',
+        role: role as UserRole,
         numero_cuenta: numeroCuenta
       };
       
@@ -206,7 +214,7 @@ export default function UsuariosPage() {
         name: userName,
         email,
         password,
-        role: role as 'Alumno' | 'Jefe de grupo' | 'Coordinador' | 'Maestro' | 'Administrador',
+        role: role as UserRole,
         numero_cuenta: numeroCuenta
       };
       
@@ -320,18 +328,17 @@ export default function UsuariosPage() {
             />
             
             <FormControl fullWidth margin="normal">
-              <InputLabel>Rol del usuario</InputLabel>
+              <InputLabel>Rol</InputLabel>
               <Select
                 value={role}
-                label="Rol del usuario"
                 onChange={handleRoleChange}
-                disabled={!selectedUser}
+                label="Rol"
               >
-                <MenuItem value="Alumno">Alumno</MenuItem>
-                <MenuItem value="Jefe de grupo">Jefe de grupo</MenuItem>
-                <MenuItem value="Coordinador">Coordinador</MenuItem>
-                <MenuItem value="Maestro">Maestro</MenuItem>
-                <MenuItem value="Administrador">Administrador</MenuItem>
+                {roles.map((role) => (
+                  <MenuItem key={role} value={role}>
+                    {role}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
             
@@ -400,17 +407,17 @@ export default function UsuariosPage() {
             />
             
             <FormControl fullWidth margin="normal">
-              <InputLabel>Rol del usuario</InputLabel>
+              <InputLabel>Rol</InputLabel>
               <Select
                 value={role}
-                label="Rol del usuario"
-                onChange={handleRoleChange}
+                onChange={(e) => setRole(e.target.value as UserRole)}
+                label="Rol"
               >
-                <MenuItem value="Alumno">Alumno</MenuItem>
-                <MenuItem value="Jefe de grupo">Jefe de grupo</MenuItem>
-                <MenuItem value="Coordinador">Coordinador</MenuItem>
-                <MenuItem value="Maestro">Maestro</MenuItem>
-                <MenuItem value="Administrador">Administrador</MenuItem>
+                {roles.map((role) => (
+                  <MenuItem key={role} value={role}>
+                    {role}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
             

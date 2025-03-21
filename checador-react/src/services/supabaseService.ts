@@ -1,20 +1,22 @@
 import { supabase } from '../lib/supabase';
 
-// Interfaces para los tipos de datos
+export type UserRole = 'Alumno' | 'Jefe_de_Grupo' | 'Coordinador' | 'Maestro' | 'Administrador';
+
 export interface Usuario {
   id?: number;
   name: string;
   email: string;
   password: string;
-  role: 'Alumno' | 'Jefe de grupo' | 'Coordinador' | 'Maestro' | 'Administrador';
+  role: UserRole;
   numero_cuenta?: string;
 }
 
 export interface Grupo {
   id?: number;
   name: string;
-  classroom: string;
-  building: string;
+  classroom?: string;
+  building?: string;
+  jefe_nocuenta?: string;
 }
 
 export interface Materia {
@@ -134,16 +136,16 @@ export const gruposService = {
     return data as Grupo;
   },
 
-  async update(id: number, grupo: Partial<Grupo>): Promise<Grupo> {
+  async update(id: number, grupo: Grupo): Promise<Grupo> {
     const { data, error } = await supabase
       .from('grupo')
       .update(grupo)
       .eq('id', id)
       .select()
       .single();
-    
-    if (error) throw new Error(error.message);
-    return data as Grupo;
+
+    if (error) throw error;
+    return data;
   },
 
   async delete(id: number): Promise<void> {
@@ -405,5 +407,15 @@ export const horariosService = {
     
     if (error) throw new Error(error.message);
     return data as HorarioMaestro;
+  }
+};
+
+export const authService = {
+  async ejecutarInsercionAutomatica() {
+    const { data, error } = await supabase
+      .rpc('insertar_asistencia_auto');
+    
+    if (error) throw new Error(error.message);
+    return data;
   }
 }; 
