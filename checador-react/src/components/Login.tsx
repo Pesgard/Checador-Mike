@@ -62,6 +62,9 @@ export default function Login() {
             case 'Jefe_de_Grupo':
               navigate('/jefe/horario')
               break
+            case 'Maestro':
+              navigate('/maestro/horario')
+              break
             case 'Administrador':
             default:
               navigate('/admin')
@@ -89,6 +92,9 @@ export default function Login() {
       switch(userData.role) {
         case 'Jefe_de_Grupo':
           navigate('/jefe/horario')
+          break
+        case 'Maestro':
+          navigate('/maestro/horario')
           break
         case 'Administrador':
         default:
