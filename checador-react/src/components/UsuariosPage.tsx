@@ -39,7 +39,7 @@ export default function UsuariosPage() {
   const roles: UserRole[] = [
     'Alumno',
     'Jefe_de_Grupo',
-    'Coordinador',
+    'Checador',
     'Maestro',
     'Administrador'
   ];

@@ -20,6 +20,7 @@ import JefeLayout from './components/JefeLayout'
 import BuscarMaestroPage from './components/BuscarMaestroPage'
 import MaestroLayout from './layouts/MaestroLayout'
 import MaestroHorarioPage from './components/MaestroHorarioPage'
+import ChecadorLayout from './components/ChecadorLayout'
 import './App.css'
 
 // Crear un tema personalizado
@@ -75,6 +76,11 @@ function App() {
               {/* Rutas de Maestro */}
               <Route element={<MaestroLayout />}>
                 <Route path="/maestro/horario" element={<MaestroHorarioPage />} />
+              </Route>
+              
+              {/* Rutas de Checador */}
+              <Route path="/checador" element={<ChecadorLayout />}>
+                <Route index element={<ChecadorHorarioPage />} />
               </Route>
               
               {/* Catch-all route */}

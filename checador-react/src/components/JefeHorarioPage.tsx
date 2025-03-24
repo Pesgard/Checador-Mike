@@ -95,15 +95,7 @@ export default function JefeHorarioPage() {
 
   useEffect(() => {
     const selectedDateObj = formatDate(selectedDate);
-    let diaSemana = selectedDateObj.getDay();
-    
-    // Si es domingo (0), lo convertimos a 7 para el cálculo
-    if (diaSemana === 0) diaSemana = 7;
-    
-    if (diaSemana === 7 || diaSemana === 6) {
-      setError('No hay clases los fines de semana');
-      return;
-    }
+    const diaSemana = selectedDateObj.getDay();
     
     setDiaActual(DIAS_MAP[diaSemana]);
     setFecha(selectedDate);

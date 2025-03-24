@@ -10,9 +10,11 @@ import {
   SelectChangeEvent,
   Grid,
   Snackbar,
-  Alert
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import { carrerasService, materiasService, Carrera, Materia } from '../services/supabaseService';
+import { supabase } from '../lib/supabase';
 
 export default function TemarioPage() {
   const [carreras, setCarreras] = useState<Carrera[]>([]);
@@ -87,6 +89,142 @@ export default function TemarioPage() {
   const handleCloseAlert = () => {
     setError(null);
     setSuccess(null);
+  };
+
+  const handleFileUpload = async () => {
+    if (!file || !subject) return;
+
+    try {
+      setLoading(true);
+      
+      // Generar un nombre único para el archivo
+      const fileExt = file.name.split('.').pop();
+      const fileName = `temario_${subject}_${Date.now()}.${fileExt}`;
+
+      console.log('Intentando subir archivo:', {
+        fileName,
+        fileSize: file.size,
+        fileType: file.type
+      });
+
+      // Subir el archivo al bucket 'temarios'
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('temarios')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          contentType: file.type,
+          upsert: true // Permitir sobrescribir si existe
+        });
+
+      if (uploadError) {
+        console.error('Error al subir archivo:', uploadError);
+        throw new Error(`Error al subir archivo: ${uploadError.message}`);
+      }
+
+      console.log('Archivo subido exitosamente:', uploadData);
+
+      // Obtener la URL pública del archivo
+      const { data: { publicUrl } } = supabase.storage
+        .from('temarios')
+        .getPublicUrl(fileName);
+
+      console.log('URL pública generada:', publicUrl);
+
+      // Actualizar la URL del temario en la tabla materias
+      const { error: updateError } = await supabase
+        .from('materias')
+        .update({ temario_url: publicUrl })
+        .eq('id', subject);
+
+      if (updateError) {
+        console.error('Error al actualizar materia:', updateError);
+        // Si falla la actualización de la BD, eliminar el archivo subido
+        await supabase.storage
+          .from('temarios')
+          .remove([fileName]);
+        throw new Error(`Error al actualizar materia: ${updateError.message}`);
+      }
+
+      setSuccess('Temario subido exitosamente');
+      setFile(null);
+      
+      // Limpiar el input de archivo
+      const fileInput = document.getElementById('contained-button-file') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+      
+    } catch (error: any) {
+      console.error('Error completo:', error);
+      setError(error.message || 'Error al subir el temario');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewTemario = async () => {
+    try {
+      // Obtener la URL del temario de la materia seleccionada
+      const { data, error } = await supabase
+        .from('materias')
+        .select('temario_url')
+        .eq('id', subject)
+        .single();
+
+      if (error) throw error;
+
+      if (!data?.temario_url) {
+        setError('Esta materia no tiene temario');
+        return;
+      }
+
+      // Abrir el temario en una nueva pestaña
+      window.open(data.temario_url, '_blank');
+    } catch (error: any) {
+      setError(error.message);
+    }
+  };
+
+  const handleDeleteTemario = async () => {
+    try {
+      setLoading(true);
+
+      // Obtener la URL actual del temario
+      const { data, error: fetchError } = await supabase
+        .from('materias')
+        .select('temario_url')
+        .eq('id', subject)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      if (!data?.temario_url) {
+        setError('Esta materia no tiene temario');
+        return;
+      }
+
+      // Extraer el nombre del archivo de la URL
+      const fileName = data.temario_url.split('/').pop();
+
+      // Eliminar el archivo del bucket
+      const { error: deleteStorageError } = await supabase.storage
+        .from('temarios')
+        .remove([fileName]);
+
+      if (deleteStorageError) throw deleteStorageError;
+
+      // Actualizar la referencia en la base de datos
+      const { error: updateError } = await supabase
+        .from('materias')
+        .update({ temario_url: null })
+        .eq('id', subject);
+
+      if (updateError) throw updateError;
+
+      setSuccess('Temario eliminado exitosamente');
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -177,16 +315,29 @@ export default function TemarioPage() {
             <Button 
               variant="outlined" 
               color="error"
+              onClick={handleDeleteTemario}
+              disabled={loading}
             >
-              Eliminar
+              {loading ? <CircularProgress size={24} /> : 'Eliminar'}
             </Button>
           </Grid>
           <Grid item>
             <Button 
               variant="contained" 
-              color="primary"
+              onClick={handleViewTemario}
+              disabled={loading}
             >
               Ver
+            </Button>
+          </Grid>
+          <Grid item>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleFileUpload}
+              disabled={!file || loading}
+            >
+              {loading ? <CircularProgress size={24} /> : 'Subir'}
             </Button>
           </Grid>
         </Grid>

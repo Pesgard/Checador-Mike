@@ -1,6 +1,11 @@
 import { supabase } from '../lib/supabase';
 
-export type UserRole = 'Alumno' | 'Jefe_de_Grupo' | 'Coordinador' | 'Maestro' | 'Administrador';
+export type UserRole = 
+  | 'Alumno' 
+  | 'Jefe_de_Grupo' 
+  | 'Checador'
+  | 'Maestro' 
+  | 'Administrador';
 
 export interface Usuario {
   id?: number;
