@@ -287,6 +287,9 @@ export default function MaestroHorarioPage() {
           InputLabelProps={{
             shrink: true,
           }}
+          inputProps={{
+            max: new Date().toISOString().split('T')[0] // Restringe fechas futuras
+          }}
           sx={{ width: 200 }}
         />
         <Button 

@@ -271,6 +271,9 @@ export default function JefeHorarioPage() {
           InputLabelProps={{
             shrink: true,
           }}
+          inputProps={{
+            max: new Date().toISOString().split('T')[0] // Restringe fechas futuras
+          }}
           sx={{ width: 200 }}
         />
         <Button 
@@ -375,21 +378,6 @@ export default function JefeHorarioPage() {
                               }}
                             >
                               Ausente
-                            </Button>
-                            <Button
-                              size="small"
-                              variant={celda.asistencia === 'pendiente' ? "contained" : "outlined"}
-                              onClick={() => handleToggleAsistencia(diaActual, hora, 'pendiente')}
-                              color="warning"
-                              sx={{ 
-                                minWidth: '90px',
-                                bgcolor: celda.asistencia === 'pendiente' ? 'warning.main' : 'transparent',
-                                '&:hover': {
-                                  bgcolor: celda.asistencia === 'pendiente' ? 'warning.dark' : 'warning.light',
-                                }
-                              }}
-                            >
-                              Pendiente
                             </Button>
                           </Box>
                         </>

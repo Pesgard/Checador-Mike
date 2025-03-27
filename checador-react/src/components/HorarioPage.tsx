@@ -20,7 +20,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { gruposService, materiasService, usuariosService, horariosService, Grupo, Materia, Usuario, HorarioMaestro } from '../services/supabaseService';
+import { gruposService, materiasService, usuariosService, horariosService, carrerasService, Grupo, Materia, Usuario, HorarioMaestro, Carrera } from '../services/supabaseService';
 
 // Estructura para los datos del horario
 interface HorarioData {
@@ -45,6 +45,7 @@ const formatHora = (hora: string) => {
 };
 
 export default function HorarioPage() {
+  const [selectedCarreraFilter, setSelectedCarreraFilter] = useState<string>('');
   const [selectedGrupo, setSelectedGrupo] = useState<string>('');
   const [grupos, setGrupos] = useState<Grupo[]>([]);
   const [horarioData, setHorarioData] = useState<Map<string, HorarioData>>(new Map());
@@ -55,6 +56,7 @@ export default function HorarioPage() {
   const [maestros, setMaestros] = useState<Usuario[]>([]);
   const [selectedMaestro, setSelectedMaestro] = useState<string>('');
   const [horarios, setHorarios] = useState<HorarioMaestro[]>([]);
+  const [carreras, setCarreras] = useState<Carrera[]>([]);
 
   const handleChangeGrupo = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedGrupo(event.target.value);
@@ -106,20 +108,26 @@ export default function HorarioPage() {
     };
 
     const fetchData = async () => {
+      setLoading(true);
       try {
-        const usuariosData = await usuariosService.getAll();
+        const [usuariosData, materiasData, horariosData, carrerasData] = await Promise.all([
+          usuariosService.getAll(),
+          materiasService.getAll(),
+          horariosService.getAll(),
+          carrerasService.getAll()
+        ]);
+
         const maestrosData = usuariosData.filter(usuario => usuario.role === 'Maestro');
         setMaestros(maestrosData);
-
-        const materiasData = await materiasService.getAll();
         setMaterias(materiasData);
-
-        const horariosData = await horariosService.getAll();
-        console.log("Horarios cargados:", horariosData);
         setHorarios(horariosData);
+        setCarreras(carrerasData);
+        console.log("Horarios cargados:", horariosData);
       } catch (err: any) {
         console.error("Error al cargar datos:", err);
         setError(err.message || 'Error al cargar datos');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -324,6 +332,17 @@ export default function HorarioPage() {
     });
   };
 
+  // Función para obtener grupos filtrados por carrera
+  const getGruposFiltrados = () => {
+    if (!selectedCarreraFilter) return [];
+    return grupos.filter(grupo => grupo.carrera_id?.toString() === selectedCarreraFilter);
+  };
+
+  // Modificar el useEffect para limpiar la selección de grupo cuando cambia la carrera
+  useEffect(() => {
+    setSelectedGrupo('');
+  }, [selectedCarreraFilter]);
+
   // Modificar la sección de la tabla para grupos y maestros
   const renderHorarioTable = () => {
     // Obtener el grupo seleccionado para mostrar su información
@@ -410,16 +429,39 @@ export default function HorarioPage() {
       </Typography>
 
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
+          <FormControl fullWidth>
+            <InputLabel>Carrera</InputLabel>
+            <Select
+              value={selectedCarreraFilter}
+              label="Carrera"
+              onChange={(e) => setSelectedCarreraFilter(e.target.value)}
+              disabled={loading}
+            >
+              <MenuItem value="">
+                <em>Seleccione una carrera</em>
+              </MenuItem>
+              {carreras.map((carrera) => (
+                <MenuItem key={carrera.id} value={carrera.id.toString()}>
+                  {carrera.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={4}>
           <FormControl fullWidth>
             <InputLabel>Grupo</InputLabel>
             <Select
               value={selectedGrupo}
               label="Grupo"
               onChange={handleChangeGrupo}
-              disabled={loading}
+              disabled={loading || !selectedCarreraFilter}
             >
-              {grupos.map((grupo) => (
+              <MenuItem value="">
+                <em>Seleccione un grupo</em>
+              </MenuItem>
+              {getGruposFiltrados().map((grupo) => (
                 <MenuItem key={grupo.id} value={grupo.id?.toString() || ''}>
                   {grupo.name} - {grupo.classroom} ({grupo.building})
                 </MenuItem>
@@ -427,7 +469,7 @@ export default function HorarioPage() {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
           <FormControl fullWidth>
             <InputLabel>Seleccionar Maestro</InputLabel>
             <Select
@@ -435,6 +477,9 @@ export default function HorarioPage() {
               label="Seleccionar Maestro"
               onChange={handleChangeMaestro}
             >
+              <MenuItem value="">
+                <em>Seleccione un maestro</em>
+              </MenuItem>
               {maestros.map((maestro) => (
                 <MenuItem key={maestro.id} value={maestro.id?.toString()}>
                   {maestro.name}

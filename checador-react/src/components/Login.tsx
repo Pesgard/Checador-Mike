@@ -65,6 +65,12 @@ export default function Login() {
             case 'Maestro':
               navigate('/maestro/horario')
               break
+            case 'Checador':
+              navigate('/checador')
+              break
+            case 'Alumno':
+              navigate('/alumno/horario')
+              break
             case 'Administrador':
             default:
               navigate('/admin')
@@ -80,13 +86,16 @@ export default function Login() {
       // Si la autenticación con Supabase Auth fue exitosa, obtener el rol
       const { data: userData, error: roleError } = await supabase
         .from('usuarios')
-        .select('role')
+        .select('*')  // Cambiado de 'role' a '*' para obtener todos los datos
         .eq('email', email)
         .single();
       
       if (roleError || !userData) {
         throw new Error('No se encontró información del usuario');
       }
+
+      // Guardar datos del usuario
+      localStorage.setItem('user', JSON.stringify(userData));
 
       // Redireccionar según el rol
       switch(userData.role) {
@@ -96,12 +105,19 @@ export default function Login() {
         case 'Maestro':
           navigate('/maestro/horario')
           break
+        case 'Checador':
+          navigate('/checador')
+          break
+        case 'Alumno':
+          navigate('/alumno/horario')
+          break
         case 'Administrador':
         default:
           navigate('/admin')
           break
       }
     } catch (err: any) {
+      console.error('Error completo:', err);
       setError(err.message || 'Error al iniciar sesión')
     } finally {
       setLoading(false)

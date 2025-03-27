@@ -229,11 +229,6 @@ export default function TemarioPage() {
 
   return (
     <Box sx={{ p: 4, height: '100%' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
-        <Button variant="contained" sx={{ mr: 1 }}>Editar</Button>
-        <Button variant="outlined">Agregar</Button>
-      </Box>
-
       <Paper elevation={2} sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
         <Typography variant="h5" gutterBottom align="center" sx={{ mb: 4 }}>
           Seleccione la carrera
@@ -305,7 +300,7 @@ export default function TemarioPage() {
                 cursor: 'pointer'
               }}
             >
-              {file ? file.name : "Choose File"}
+              {file ? file.name : "Seleccionar archivo"}
             </Box>
           </label>
         </Box>

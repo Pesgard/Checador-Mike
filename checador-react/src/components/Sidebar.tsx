@@ -22,7 +22,10 @@ import {
   School as SchoolIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
-  Logout as LogoutIcon
+  Logout as LogoutIcon,
+  Business as BusinessIcon,
+  Schedule as ScheduleIcon,
+  AssignmentTurnedIn as AssignmentTurnedInIcon,
 } from '@mui/icons-material'
 import { useAuth } from '../contexts/AuthContext'
 import { Usuario } from '../services/supabaseService'
@@ -75,14 +78,19 @@ export default function Sidebar() {
   }
 
   const menuItems = [
-    { text: 'Menu', icon: <DashboardIcon />, path: '/admin' },
-    { text: 'Horario', icon: <CalendarIcon />, path: '/admin/horario' },
-    { text: 'Horarios', icon: <CalendarIcon />, path: '/admin/horarios' },
+    { text: 'Gestión de Horarios', icon: <CalendarIcon />, path: '/admin/horarios' },
+    { text: 'Consulta de Horarios', icon: <ScheduleIcon />, path: '/admin/horario' },
     { text: 'Grupos', icon: <GroupsIcon />, path: '/admin/grupos' },
     { text: 'Usuarios', icon: <PersonIcon />, path: '/admin/usuarios' },
     { text: 'Materias', icon: <BookIcon />, path: '/admin/materias' },
     { text: 'Carreras', icon: <SchoolIcon />, path: '/admin/carreras' },
     { text: 'Temario', icon: <BookmarkIcon />, path: '/admin/temarios' },
+    { text: 'Edificios', icon: <BusinessIcon />, path: '/admin/edificios' },
+    {
+      text: 'Consulta de Asistencias',
+      icon: <AssignmentTurnedInIcon />,
+      path: '/admin/consulta-asistencias'
+    },
   ]
 
   return (

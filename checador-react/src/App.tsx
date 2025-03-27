@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { Box, ThemeProvider, createTheme, CssBaseline } from '@mui/material'
+import { LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
+import { es } from 'date-fns/locale'
 
 // Components
 import Login from './components/Login'
@@ -21,6 +24,10 @@ import BuscarMaestroPage from './components/BuscarMaestroPage'
 import MaestroLayout from './layouts/MaestroLayout'
 import MaestroHorarioPage from './components/MaestroHorarioPage'
 import ChecadorLayout from './components/ChecadorLayout'
+import AlumnoLayout from './components/AlumnoLayout'
+import AlumnoHorarioPage from './components/AlumnoHorarioPage'
+import EdificiosPage from './components/EdificiosPage'
+import ConsultaAsistenciasPage from './components/ConsultaAsistenciasPage'
 import './App.css'
 
 // Crear un tema personalizado
@@ -44,51 +51,60 @@ const theme = createTheme({
 function App() {
   return (
     <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box className="app-container">
-        <BrowserRouter>
-          <AuthProvider>
-            <Routes>
-              {/* Public route */}
-              <Route path="/" element={<Login />} />
-              
-              {/* Protected admin routes */}
-              <Route element={<ProtectedRoute />}>
-                <Route element={<AdminLayout />}>
-                  <Route path="/admin" element={<AdminDashboard />} />
-                  <Route path="/admin/horario" element={<HorarioPage />} />
-                  <Route path="/admin/horarios" element={<HorariosPage />} />
-                  <Route path="/admin/grupos" element={<GruposPage />} />
-                  <Route path="/admin/usuarios" element={<UsuariosPage />} />
-                  <Route path="/admin/materias" element={<MateriasPage />} />
-                  <Route path="/admin/carreras" element={<CarrerasPage />} />
-                  <Route path="/admin/temarios" element={<TemarioPage />} />
-                  <Route path="/admin/checador-horario" element={<ChecadorHorarioPage />} />
+      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+        <CssBaseline />
+        <Box className="app-container">
+          <BrowserRouter>
+            <AuthProvider>
+              <Routes>
+                {/* Public route */}
+                <Route path="/" element={<Login />} />
+                
+                {/* Protected admin routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route element={<AdminLayout />}>
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/admin/horario" element={<HorarioPage />} />
+                    <Route path="/admin/horarios" element={<HorariosPage />} />
+                    <Route path="/admin/grupos" element={<GruposPage />} />
+                    <Route path="/admin/usuarios" element={<UsuariosPage />} />
+                    <Route path="/admin/materias" element={<MateriasPage />} />
+                    <Route path="/admin/carreras" element={<CarrerasPage />} />
+                    <Route path="/admin/temarios" element={<TemarioPage />} />
+                    <Route path="/admin/checador-horario" element={<ChecadorHorarioPage />} />
+                    <Route path="/admin/edificios" element={<EdificiosPage />} />
+                    <Route path="/admin/consulta-asistencias" element={<ConsultaAsistenciasPage />} />
+                  </Route>
                 </Route>
-              </Route>
-              
-              {/* Rutas de Jefe de Grupo */}
-              <Route element={<JefeLayout />}>
-                <Route path="/jefe/horario" element={<JefeHorarioPage />} />
-                <Route path="/jefe/buscar" element={<BuscarMaestroPage />} />
-              </Route>
+                
+                {/* Rutas de Jefe de Grupo */}
+                <Route element={<JefeLayout />}>
+                  <Route path="/jefe/horario" element={<JefeHorarioPage />} />
+                  <Route path="/jefe/buscar" element={<BuscarMaestroPage />} />
+                </Route>
 
-              {/* Rutas de Maestro */}
-              <Route element={<MaestroLayout />}>
-                <Route path="/maestro/horario" element={<MaestroHorarioPage />} />
-              </Route>
-              
-              {/* Rutas de Checador */}
-              <Route path="/checador" element={<ChecadorLayout />}>
-                <Route index element={<ChecadorHorarioPage />} />
-              </Route>
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<div>Página no encontrada</div>} />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </Box>
+                {/* Rutas de Maestro */}
+                <Route element={<MaestroLayout />}>
+                  <Route path="/maestro/horario" element={<MaestroHorarioPage />} />
+                </Route>
+                
+                {/* Rutas de Checador */}
+                <Route path="/checador" element={<ChecadorLayout />}>
+                  <Route index element={<ChecadorHorarioPage />} />
+                </Route>
+                
+                {/* Rutas de Alumno */}
+                <Route element={<AlumnoLayout />}>
+                  <Route path="/alumno/horario" element={<AlumnoHorarioPage />} />
+                </Route>
+                
+                {/* Catch-all route */}
+                <Route path="*" element={<div>Página no encontrada</div>} />
+              </Routes>
+            </AuthProvider>
+          </BrowserRouter>
+        </Box>
+      </LocalizationProvider>
     </ThemeProvider>
   )
 }

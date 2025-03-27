@@ -21,7 +21,7 @@ import { Usuario, usuariosService, UserRole } from '../services/supabaseService'
 import { supabase } from '../lib/supabase';
 
 export default function UsuariosPage() {
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState(1);
   const [accountNumber, setAccountNumber] = useState('');
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
@@ -64,7 +64,7 @@ export default function UsuariosPage() {
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
     // Limpiar formulario al cambiar de tab
-    if (newValue === 1) {
+    if (newValue === 0) {
       clearForm();
     }
   };
@@ -242,23 +242,99 @@ export default function UsuariosPage() {
           variant="fullWidth"
           textColor="primary"
           indicatorColor="primary"
+          sx={{ 
+            '& .MuiTabs-flexContainer': {
+              flexDirection: 'row-reverse'
+            }
+          }}
         >
           <Tab label="Editar" />
-          <Tab label="Añadir" />
+          <Tab label="Agregar" />
         </Tabs>
       </Paper>
 
-      {tabValue === 0 ? (
+      {tabValue === 1 ? (
         <Paper sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
           <Typography variant="h5" gutterBottom align="center">
-            Para poder ver o editar un usuario es necesario contar con un número de cuenta o ID
+            Agregar nuevo usuario
+          </Typography>
+
+          <Box component="form" sx={{ mt: 3 }}>
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Rol</InputLabel>
+              <Select
+                value={role}
+                onChange={(e) => setRole(e.target.value as UserRole)}
+                label="Rol"
+              >
+                {roles.map((role) => (
+                  <MenuItem key={role} value={role}>
+                    {role}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Número de Cuenta"
+              value={numeroCuenta}
+              onChange={(e) => setNumeroCuenta(e.target.value)}
+              helperText="Este campo es opcional"
+            />
+            
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Nombre del usuario"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              required
+            />
+            
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Correo Electrónico"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Contraseña"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            
+            <Button 
+              fullWidth
+              variant="contained"
+              onClick={handleAddUser}
+              disabled={loading}
+              sx={{ mt: 3 }}
+            >
+              {loading ? <CircularProgress size={24} /> : 'Crear usuario'}
+            </Button>
+          </Box>
+        </Paper>
+      ) : (
+        <Paper sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
+          <Typography variant="h5" gutterBottom align="center">
+            Editar usuario
           </Typography>
 
           <Grid container spacing={2} sx={{ mb: 4, mt: 2 }}>
             <Grid item xs>
               <TextField
                 fullWidth
-                label="Número de cuenta"
+                label="Buscar por número de cuenta o ID"
                 value={searchAccount}
                 onChange={(e) => setSearchAccount(e.target.value)}
               />
@@ -275,10 +351,6 @@ export default function UsuariosPage() {
             </Grid>
           </Grid>
 
-          <Typography variant="h5" gutterBottom align="center">
-            Datos del usuario
-          </Typography>
-
           <Box component="form" sx={{ mt: 3 }}>
             <TextField
               fullWidth
@@ -287,6 +359,22 @@ export default function UsuariosPage() {
               value={accountNumber}
               disabled={true}
             />
+            
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Rol</InputLabel>
+              <Select
+                value={role}
+                onChange={handleRoleChange}
+                label="Rol"
+                disabled={!selectedUser}
+              >
+                {roles.map((role) => (
+                  <MenuItem key={role} value={role}>
+                    {role}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             
             <TextField
               fullWidth
@@ -327,21 +415,6 @@ export default function UsuariosPage() {
               helperText="Dejar en blanco para mantener la contraseña actual"
             />
             
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Rol</InputLabel>
-              <Select
-                value={role}
-                onChange={handleRoleChange}
-                label="Rol"
-              >
-                {roles.map((role) => (
-                  <MenuItem key={role} value={role}>
-                    {role}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
               <Button 
                 variant="outlined" 
@@ -361,80 +434,9 @@ export default function UsuariosPage() {
             </Box>
           </Box>
         </Paper>
-      ) : (
-        <Paper sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
-          <Typography variant="h5" gutterBottom align="center">
-            Agregar nuevo usuario
-          </Typography>
-
-          <Box component="form" sx={{ mt: 3 }}>
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Número de Cuenta"
-              value={numeroCuenta}
-              onChange={(e) => setNumeroCuenta(e.target.value)}
-              helperText="Este campo es opcional"
-            />
-            
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Nombre del usuario"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              required
-            />
-            
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Correo Electrónico"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Contraseña"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Rol</InputLabel>
-              <Select
-                value={role}
-                onChange={(e) => setRole(e.target.value as UserRole)}
-                label="Rol"
-              >
-                {roles.map((role) => (
-                  <MenuItem key={role} value={role}>
-                    {role}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <Button 
-              fullWidth
-              variant="contained"
-              onClick={handleAddUser}
-              disabled={loading}
-              sx={{ mt: 3 }}
-            >
-              {loading ? <CircularProgress size={24} /> : 'Crear usuario'}
-            </Button>
-          </Box>
-        </Paper>
       )}
 
-      {/* Alertas de éxito y error */}
+      {/* Alertas */}
       <Snackbar open={!!error} autoHideDuration={6000} onClose={handleCloseAlert}>
         <Alert onClose={handleCloseAlert} severity="error" sx={{ width: '100%' }}>
           {error}

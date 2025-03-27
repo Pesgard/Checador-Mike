@@ -18,7 +18,7 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material';
-import { gruposService, materiasService, usuariosService, horariosService } from '../services/supabaseService';
+import { gruposService, materiasService, usuariosService, horariosService, carrerasService, Carrera } from '../services/supabaseService';
 import { supabase } from '../lib/supabase';
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
@@ -31,12 +31,25 @@ const formatHora = (hora: string) => {
 export default function AlumnoHorarioPage() {
   const [selectedGrupo, setSelectedGrupo] = useState<string>('');
   const [selectedMaestro, setSelectedMaestro] = useState<string>('');
+  const [selectedCarreraFilter, setSelectedCarreraFilter] = useState<string>('');
   const [grupos, setGrupos] = useState<any[]>([]);
   const [maestros, setMaestros] = useState<any[]>([]);
+  const [carreras, setCarreras] = useState<Carrera[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [horarioData, setHorarioData] = useState(new Map<string, any>());
+
+  // Función para filtrar grupos por carrera
+  const getGruposFiltrados = () => {
+    if (!selectedCarreraFilter) return [];
+    return grupos.filter(grupo => grupo.carrera_id?.toString() === selectedCarreraFilter);
+  };
+
+  // Limpiar grupo seleccionado cuando cambia la carrera
+  useEffect(() => {
+    setSelectedGrupo('');
+  }, [selectedCarreraFilter]);
 
   const handleChangeGrupo = (event: any) => {
     setSelectedGrupo(event.target.value);
@@ -57,12 +70,17 @@ export default function AlumnoHorarioPage() {
     const fetchInitialData = async () => {
       setLoading(true);
       try {
-        const { data: gruposData } = await supabase.from('grupo').select('*');
-        const { data: usuariosData } = await supabase.from('usuarios').select('*');
-        const maestrosData = usuariosData?.filter(u => u.role === 'Maestro') || [];
+        const [gruposData, usuariosData, carrerasData] = await Promise.all([
+          supabase.from('grupo').select('*'),
+          supabase.from('usuarios').select('*'),
+          carrerasService.getAll()
+        ]);
+
+        const maestrosData = usuariosData.data?.filter(u => u.role === 'Maestro') || [];
         
-        setGrupos(gruposData || []);
+        setGrupos(gruposData.data || []);
         setMaestros(maestrosData);
+        setCarreras(carrerasData);
       } catch (err: any) {
         console.error("Error al cargar datos iniciales:", err);
         setError(err.message);
@@ -182,7 +200,27 @@ export default function AlumnoHorarioPage() {
       )}
 
       <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
+          <FormControl fullWidth>
+            <InputLabel>Carrera</InputLabel>
+            <Select
+              value={selectedCarreraFilter}
+              label="Carrera"
+              onChange={(e) => setSelectedCarreraFilter(e.target.value)}
+              disabled={loading}
+            >
+              <MenuItem value="">
+                <em>Seleccione una carrera</em>
+              </MenuItem>
+              {carreras.map((carrera) => (
+                <MenuItem key={carrera.id} value={carrera.id.toString()}>
+                  {carrera.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={4}>
           <FormControl fullWidth>
             <InputLabel id="grupo-label">Grupo</InputLabel>
             <Select
@@ -190,9 +228,12 @@ export default function AlumnoHorarioPage() {
               value={selectedGrupo}
               label="Grupo"
               onChange={handleChangeGrupo}
-              disabled={!!loading}
+              disabled={loading || !selectedCarreraFilter}
             >
-              {grupos.map((grupo) => (
+              <MenuItem value="">
+                <em>Seleccione un grupo</em>
+              </MenuItem>
+              {getGruposFiltrados().map((grupo) => (
                 <MenuItem key={grupo.id} value={grupo.id?.toString()}>
                   {grupo.name} - {grupo.classroom} ({grupo.building})
                 </MenuItem>
@@ -200,7 +241,7 @@ export default function AlumnoHorarioPage() {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
           <FormControl fullWidth>
             <InputLabel id="maestro-label">Seleccionar Maestro</InputLabel>
             <Select
@@ -208,8 +249,11 @@ export default function AlumnoHorarioPage() {
               value={selectedMaestro}
               label="Seleccionar Maestro"
               onChange={handleChangeMaestro}
-              disabled={!!loading}
+              disabled={loading}
             >
+              <MenuItem value="">
+                <em>Seleccione un maestro</em>
+              </MenuItem>
               {maestros.map((maestro) => (
                 <MenuItem key={maestro.id} value={maestro.id?.toString()}>
                   {maestro.name}

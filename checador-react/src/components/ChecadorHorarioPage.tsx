@@ -22,6 +22,24 @@ import {
 import { supabase } from '../lib/supabase';
 import { SelectChangeEvent } from '@mui/material';
 
+// Constantes
+const HORAS = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', 
+               '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
+
+const DIAS_MAP: { [key: number]: string } = {
+  1: 'Lunes',
+  2: 'Martes',
+  3: 'Miércoles',
+  4: 'Jueves',
+  5: 'Viernes'
+};
+
+// Funciones auxiliares
+const getToday = () => {
+  const today = new Date();
+  return today.toISOString().split('T')[0];
+};
+
 interface HorarioData {
   dia: string;
   hora: string;
@@ -39,68 +57,136 @@ interface Maestro {
 }
 
 const DIAS_COMPLETOS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-const HORAS = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
 
 const formatHora = (hora: string) => {
   return hora;
 };
 
 export default function ChecadorHorarioPage() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [horarioData, setHorarioData] = useState<Map<string, HorarioData>>(new Map());
-  const [diaActual, setDiaActual] = useState<string>('');
-  const [horasNecesarias, setHorasNecesarias] = useState<string[]>([]);
-  const [maestros, setMaestros] = useState<Maestro[]>([]);
-  const [selectedMaestro, setSelectedMaestro] = useState<string>('todos');
-
-  // Función para obtener la fecha actual en formato YYYY-MM-DD
-  const getToday = () => {
-    const today = new Date();
-    const offset = today.getTimezoneOffset();
-    const localDate = new Date(today.getTime() - (offset * 60 * 1000));
-    return localDate.toISOString().split('T')[0];
-  };
-
-  // Inicializar selectedDate con la fecha actual local
+  const [horasNecesarias, setHorasNecesarias] = useState<string[]>(HORAS);
+  const [diaActual, setDiaActual] = useState('');
   const [selectedDate, setSelectedDate] = useState<string>(getToday());
 
-  useEffect(() => {
-    const selectedDateObj = new Date(selectedDate + 'T00:00:00');
-    const diaSemana = selectedDateObj.getDay();
-    const diaActualNombre = DIAS_COMPLETOS[diaSemana];
-    
-    setDiaActual(diaActualNombre);
-    cargarHorarios(diaActualNombre, selectedDate);
-  }, [selectedDate]);
+  // Estados para filtros de ubicación
+  const [facultades, setFacultades] = useState<string[]>([]);
+  const [edificios, setEdificios] = useState<{id: number, nombre: string}[]>([]);
+  const [aulas, setAulas] = useState<string[]>([]);
+  
+  const [selectedFacultad, setSelectedFacultad] = useState<string>('');
+  const [selectedEdificio, setSelectedEdificio] = useState<string>('');
+  const [selectedAula, setSelectedAula] = useState<string>('');
 
-  // Cargar lista de maestros
+  // Efecto para cargar facultades
   useEffect(() => {
-    const fetchMaestros = async () => {
+    const fetchFacultades = async () => {
       try {
         const { data, error } = await supabase
-          .from('usuarios')
-          .select('id, name')
-          .eq('role', 'Maestro')
-          .order('name');
+          .from('edificios')
+          .select('facultad');
 
         if (error) throw error;
-        setMaestros(data || []);
+        
+        const facultadesUnicas = Array.from(new Set(data.map(d => d.facultad))).filter(Boolean);
+        setFacultades(facultadesUnicas);
       } catch (error: any) {
-        console.error('Error al cargar maestros:', error);
-        setError('Error al cargar lista de maestros');
+        console.error('Error al cargar facultades:', error);
+        setError('Error al cargar lista de facultades');
       }
     };
 
-    fetchMaestros();
+    fetchFacultades();
   }, []);
+
+  // Efecto para actualizar el día actual
+  useEffect(() => {
+    const selectedDateObj = new Date(selectedDate + 'T00:00:00');
+    const diaSemana = selectedDateObj.getDay();
+    
+    if (diaSemana === 0 || diaSemana === 6) {
+      setError('No hay clases los fines de semana');
+      return;
+    }
+
+    setDiaActual(DIAS_MAP[diaSemana as keyof typeof DIAS_MAP] || '');
+    cargarHorarios(DIAS_MAP[diaSemana as keyof typeof DIAS_MAP] || '', selectedDate);
+  }, [selectedDate]);
+
+  // Cargar edificios cuando se selecciona facultad
+  useEffect(() => {
+    const fetchEdificios = async () => {
+      if (!selectedFacultad) {
+        setEdificios([]);
+        setSelectedEdificio('');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('edificios')
+          .select('id, nombre')
+          .eq('facultad', selectedFacultad);
+
+        if (error) throw error;
+        setEdificios(data || []);
+      } catch (error: any) {
+        console.error('Error al cargar edificios:', error);
+        setError('Error al cargar lista de edificios');
+      }
+    };
+
+    fetchEdificios();
+  }, [selectedFacultad]);
+
+  // Cargar aulas cuando se selecciona edificio
+  useEffect(() => {
+    const fetchAulas = async () => {
+      if (!selectedEdificio) {
+        setAulas([]);
+        setSelectedAula('');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('grupo')
+          .select('classroom')
+          .eq('building', selectedEdificio);
+
+        if (error) throw error;
+        
+        // Filtrar valores únicos y no nulos
+        const aulasUnicas = Array.from(new Set(
+          data
+            .map(d => d.classroom)
+            .filter(Boolean) // Elimina valores null/undefined/empty
+        )).sort();
+        
+        setAulas(aulasUnicas);
+      } catch (error: any) {
+        console.error('Error al cargar aulas:', error);
+        setError('Error al cargar lista de aulas');
+      }
+    };
+
+    fetchAulas();
+  }, [selectedEdificio]);
+
+  // Cargar horarios cuando cambian los filtros
+  useEffect(() => {
+    if (diaActual && selectedDate) {
+      cargarHorarios(diaActual, selectedDate);
+    }
+  }, [selectedFacultad, selectedEdificio, selectedAula, diaActual, selectedDate]);
 
   const cargarHorarios = async (dia: string, fecha: string) => {
     try {
       setLoading(true);
+      setError(null);
 
-      // Obtener horarios
       let query = supabase
         .from('horario-maestro')
         .select(`
@@ -113,8 +199,12 @@ export default function ChecadorHorarioPage() {
         `)
         .eq('dia', dia);
 
-      if (selectedMaestro !== 'todos') {
-        query = query.eq('maestro_id', selectedMaestro);
+      // Aplicar filtros
+      if (selectedAula) {
+        query = query.eq('grupo.classroom', selectedAula);
+      }
+      if (selectedEdificio) {
+        query = query.eq('grupo.building', selectedEdificio);
       }
 
       const { data: horarios, error: horariosError } = await query;
@@ -179,8 +269,8 @@ export default function ChecadorHorarioPage() {
 
       setHorarioData(horarioMap);
     } catch (error: any) {
-      console.error('Error completo:', error);
-      setError('Error al cargar horario: ' + error.message);
+      console.error('Error al cargar horarios:', error);
+      setError('Error al cargar horarios: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -253,12 +343,6 @@ export default function ChecadorHorarioPage() {
     setSelectedDate(getToday());
   };
 
-  // Manejar cambio de maestro seleccionado
-  const handleMaestroChange = (event: SelectChangeEvent) => {
-    setSelectedMaestro(event.target.value);
-    cargarHorarios(diaActual, selectedDate);
-  };
-
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom align="center">
@@ -274,6 +358,9 @@ export default function ChecadorHorarioPage() {
           InputLabelProps={{
             shrink: true,
           }}
+          inputProps={{
+            max: new Date().toISOString().split('T')[0] // Restringe fechas futuras
+          }}
           sx={{ width: 200 }}
         />
         <Button 
@@ -282,17 +369,61 @@ export default function ChecadorHorarioPage() {
         >
           HOY
         </Button>
+      </Box>
+
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center', gap: 2, alignItems: 'center' }}>
         <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Filtrar por Maestro</InputLabel>
+          <InputLabel>Facultad</InputLabel>
           <Select
-            value={selectedMaestro}
-            onChange={handleMaestroChange}
-            label="Filtrar por Maestro"
+            value={selectedFacultad}
+            onChange={(e) => {
+              setSelectedFacultad(e.target.value);
+              setSelectedEdificio('');
+              setSelectedAula('');
+            }}
+            label="Facultad"
           >
-            <MenuItem value="todos">Todos los maestros</MenuItem>
-            {maestros.map((maestro) => (
-              <MenuItem key={maestro.id} value={maestro.id}>
-                {maestro.name}
+            <MenuItem value="">Todas las facultades</MenuItem>
+            {facultades.map((facultad) => (
+              <MenuItem key={facultad} value={facultad}>
+                {facultad}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel>Edificio</InputLabel>
+          <Select
+            value={selectedEdificio}
+            onChange={(e) => {
+              setSelectedEdificio(e.target.value);
+              setSelectedAula('');
+            }}
+            label="Edificio"
+            disabled={!selectedFacultad}
+          >
+            <MenuItem value="">Todos los edificios</MenuItem>
+            {edificios.map((edificio) => (
+              <MenuItem key={edificio.id} value={edificio.nombre}>
+                {edificio.nombre}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel>Aula</InputLabel>
+          <Select
+            value={selectedAula}
+            onChange={(e) => setSelectedAula(e.target.value)}
+            label="Aula"
+            disabled={!selectedEdificio}
+          >
+            <MenuItem value="">Todas las aulas</MenuItem>
+            {aulas.map((aula) => (
+              <MenuItem key={aula} value={aula}>
+                {aula}
               </MenuItem>
             ))}
           </Select>
@@ -374,14 +505,6 @@ export default function ChecadorHorarioPage() {
                                 color="error"
                               >
                                 Ausente
-                              </Button>
-                              <Button
-                                size="small"
-                                variant={horario.asistencia === 'pendiente' ? "contained" : "outlined"}
-                                onClick={() => handleToggleAsistencia(diaActual, hora, 'pendiente')}
-                                color="warning"
-                              >
-                                Pendiente
                               </Button>
                             </Box>
                           </Box>
