@@ -111,21 +111,22 @@ export default function JefeHorarioPage() {
       }
       const user = JSON.parse(userString);
 
-      // Obtener el grupo donde el usuario es jefe
-      const { data: grupo, error: grupoError } = await supabase
+      // Modificar la consulta para obtener el grupo
+      const { data: grupos, error: grupoError } = await supabase
         .from('grupo')
         .select('*')
-        .eq('jefe_nocuenta', user.numero_cuenta)
-        .single();
+        .eq('jefe_nocuenta', user.numero_cuenta);
 
-      if (grupoError || !grupo) {
-        throw new Error('No se encontró el grupo');
+      if (grupoError) throw grupoError;
+      if (!grupos || grupos.length === 0) {
+        throw new Error('No se encontró ningún grupo asignado al jefe');
       }
 
+      const grupo = grupos[0]; // Tomamos el primer grupo encontrado
       setGrupoInfo({
         name: grupo.name,
-        classroom: grupo.classroom,
-        building: grupo.building
+        classroom: grupo.classroom || '',
+        building: grupo.building || ''
       });
 
       // Obtener los horarios del grupo para el día actual
