@@ -17,10 +17,134 @@ import {
   Grid,
   Snackbar,
   Alert,
-  CircularProgress
+  CircularProgress,
+  ThemeProvider,
+  createTheme,
+  CssBaseline,
+  alpha,
+  useTheme
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { gruposService, materiasService, usuariosService, horariosService, carrerasService, Grupo, Materia, Usuario, HorarioMaestro, Carrera } from '../services/supabaseService';
+
+// Custom theme
+const theme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#3f51b5', // Indigo
+      light: '#757de8',
+      dark: '#002984',
+      contrastText: '#ffffff',
+    },
+    secondary: {
+      main: '#f50057', // Pink
+      light: '#ff5983',
+      dark: '#bb002f',
+      contrastText: '#ffffff',
+    },
+    background: {
+      default: '#121212', // Dark background
+      paper: '#1E1E1E',   // Dark paper background
+    },
+    text: {
+      primary: '#FFFFFF',  // White text for dark mode
+      secondary: '#B0B0B0', // Light gray for secondary text
+    },
+  },
+  typography: {
+    fontFamily: [
+      'Roboto',
+      'Arial',
+      'sans-serif'
+    ].join(','),
+    h4: {
+      fontWeight: 600,
+      letterSpacing: '0.02em',
+    },
+    h6: {
+      fontWeight: 500,
+    },
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          backgroundColor: '#1E1E1E',
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 6,
+          textTransform: 'none',
+          fontWeight: 600,
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+          },
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          padding: '16px',
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          color: '#FFFFFF',
+        },
+        head: {
+          fontWeight: 700,
+          color: '#FFFFFF',
+        },
+      },
+    },
+    MuiFormControl: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 8,
+            transition: 'all 0.2s',
+            '&:hover': {
+              boxShadow: '0 0 0 2px rgba(121, 134, 203, 0.3)',
+            },
+            '&.Mui-focused': {
+              boxShadow: '0 0 0 3px rgba(121, 134, 203, 0.4)',
+            },
+          },
+          '& .MuiInputLabel-root': {
+            color: 'rgba(255, 255, 255, 0.7)',
+          },
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'rgba(255, 255, 255, 0.2)',
+          },
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        select: {
+          padding: '14px 16px',
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          '&.Mui-selected': {
+            backgroundColor: 'rgba(121, 134, 203, 0.2)',
+          },
+          '&:hover': {
+            backgroundColor: 'rgba(121, 134, 203, 0.1)',
+          },
+        },
+      },
+    },
+  },
+});
 
 // Estructura para los datos del horario
 interface HorarioData {
@@ -343,37 +467,83 @@ export default function HorarioPage() {
     setSelectedGrupo('');
   }, [selectedCarreraFilter]);
 
-  // Modificar la sección de la tabla para grupos y maestros
+  // Modificar renderHorarioTable para usar nuevos estilos
   const renderHorarioTable = () => {
     // Obtener el grupo seleccionado para mostrar su información
     const grupoSeleccionado = selectedGrupo ? grupos.find(g => g.id?.toString() === selectedGrupo) : null;
 
     return (
-      <TableContainer component={Paper} sx={{ mb: 4 }}>
+      <TableContainer 
+        component={Paper} 
+        sx={{ 
+          mb: 4,
+          overflow: 'hidden',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          backgroundColor: 'background.paper',
+        }}
+      >
         {/* Agregar encabezado con información del grupo si estamos en vista de grupo */}
         {selectedGrupo && grupoSeleccionado && (
-          <Box sx={{ p: 2, bgcolor: 'primary.main', color: 'white' }}>
-            <Typography variant="h6" align="center">
+          <Box sx={{ 
+            p: 2, 
+            bgcolor: 'primary.main', 
+            color: 'white',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+            borderTopLeftRadius: 8,
+            borderTopRightRadius: 8,
+          }}>
+            <Typography variant="h6" align="center" sx={{ fontWeight: 600 }}>
               Aula: {grupoSeleccionado.classroom} - Edificio: {grupoSeleccionado.building}
             </Typography>
           </Box>
         )}
         
-        <Table sx={{ minWidth: 650 }}>
+        <Table>
           <TableHead>
-            <TableRow sx={{ bgcolor: 'primary.light' }}>
-              <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Hora</TableCell>
+            <TableRow sx={{ 
+              backgroundImage: 'linear-gradient(to right, #3f51b5, #757de8)', 
+            }}>
+              <TableCell sx={{ 
+                fontWeight: 'bold', 
+                color: 'white',
+                borderBottom: 'none',
+              }}>Hora</TableCell>
               {DIAS.map((dia) => (
-                <TableCell key={dia} align="center" sx={{ fontWeight: 'bold', color: 'white' }}>
+                <TableCell 
+                  key={dia} 
+                  align="center" 
+                  sx={{ 
+                    fontWeight: 'bold', 
+                    color: 'white',
+                    borderBottom: 'none',
+                  }}
+                >
                   {dia}
                 </TableCell>
               ))}
             </TableRow>
           </TableHead>
           <TableBody>
-            {getHorasNecesarias(horarioData).map((hora) => (
-              <TableRow key={hora} hover>
-                <TableCell component="th" scope="row" sx={{ fontWeight: 'bold' }}>
+            {getHorasNecesarias(horarioData).map((hora, index) => (
+              <TableRow 
+                key={hora} 
+                hover 
+                sx={{
+                  backgroundColor: index % 2 === 0 ? 'rgba(121, 134, 203, 0.05)' : 'transparent',
+                  '&:hover': {
+                    backgroundColor: 'rgba(121, 134, 203, 0.1)',
+                  }
+                }}
+              >
+                <TableCell 
+                  component="th" 
+                  scope="row" 
+                  sx={{ 
+                    fontWeight: 600, 
+                    color: 'primary.light',
+                    borderLeft: `4px solid ${theme.palette.primary.main}`,
+                  }}
+                >
                   {formatHora(hora)}
                 </TableCell>
                 {DIAS.map((dia) => {
@@ -386,28 +556,45 @@ export default function HorarioPage() {
                       align="center" 
                       sx={{ 
                         position: 'relative',
-                        bgcolor: celda?.materia ? 'rgba(200, 230, 255, 0.2)' : 'inherit',
+                        bgcolor: celda?.materia ? 'rgba(121, 134, 203, 0.15)' : 'inherit',
                         padding: '16px',
-                        border: celda?.materia ? '1px solid #e0e0e0' : 'inherit'
+                        border: celda?.materia ? `1px solid rgba(121, 134, 203, 0.3)` : 'inherit',
+                        borderRadius: celda?.materia ? '6px' : '0',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          boxShadow: celda?.materia ? '0 4px 12px rgba(0,0,0,0.2)' : 'none',
+                        }
                       }}
                     >
                       {celda?.materia ? (
                         <>
-                          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                          <Typography variant="body2" sx={{ 
+                            fontWeight: 'bold', 
+                            color: 'primary.light',
+                          }}>
                             {celda.materia}
                           </Typography>
-                          <Typography variant="caption" display="block">
+                          <Typography variant="caption" display="block" sx={{ 
+                            color: 'secondary.light',
+                            fontWeight: 500,
+                          }}>
                             {celda.maestro}
                           </Typography>
                           {/* Mostrar aula y edificio solo en vista de maestros */}
                           {selectedMaestro && (
-                            <Typography variant="caption" display="block" color="text.secondary">
+                            <Typography variant="caption" display="block" sx={{
+                              mt: 0.5,
+                              p: 0.5,
+                              bgcolor: 'rgba(30, 30, 30, 0.7)',
+                              borderRadius: '4px',
+                              color: 'text.secondary',
+                            }}>
                               Aula: {celda.aula} - Edificio: {celda.edificio}
                             </Typography>
                           )}
                         </>
                       ) : (
-                        <Typography variant="caption" color="textSecondary">
+                        <Typography variant="caption" color="text.secondary">
                           Sin clase
                         </Typography>
                       )}
@@ -423,93 +610,159 @@ export default function HorarioPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom align="center">
-        Horario de Clases
-      </Typography>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box sx={{ 
+        p: 3, 
+        bgcolor: 'background.default',
+        minHeight: '100vh',
+      }}>
+        <Paper 
+          elevation={0}
+          sx={{ 
+            p: 4, 
+            borderRadius: 2, 
+            mb: 3,
+            bgcolor: 'background.paper',
+          }}
+        >
+          <Typography 
+            variant="h4" 
+            gutterBottom 
+            align="center"
+            sx={{ 
+              mb: 4, 
+              color: 'primary.dark',
+              position: 'relative',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                bottom: '-10px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '80px',
+                height: '4px',
+                backgroundColor: theme.palette.secondary.main,
+                borderRadius: '2px',
+              }
+            }}
+          >
+            Horario de Clases
+          </Typography>
 
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={4}>
-          <FormControl fullWidth>
-            <InputLabel>Carrera</InputLabel>
-            <Select
-              value={selectedCarreraFilter}
-              label="Carrera"
-              onChange={(e) => setSelectedCarreraFilter(e.target.value)}
-              disabled={loading}
-            >
-              <MenuItem value="">
-                <em>Seleccione una carrera</em>
-              </MenuItem>
-              {carreras.map((carrera) => (
-                <MenuItem key={carrera.id} value={carrera.id.toString()}>
-                  {carrera.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <FormControl fullWidth>
-            <InputLabel>Grupo</InputLabel>
-            <Select
-              value={selectedGrupo}
-              label="Grupo"
-              onChange={handleChangeGrupo}
-              disabled={loading || !selectedCarreraFilter}
-            >
-              <MenuItem value="">
-                <em>Seleccione un grupo</em>
-              </MenuItem>
-              {getGruposFiltrados().map((grupo) => (
-                <MenuItem key={grupo.id} value={grupo.id?.toString() || ''}>
-                  {grupo.name} - {grupo.classroom} ({grupo.building})
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <FormControl fullWidth>
-            <InputLabel>Seleccionar Maestro</InputLabel>
-            <Select
-              value={selectedMaestro}
-              label="Seleccionar Maestro"
-              onChange={handleChangeMaestro}
-            >
-              <MenuItem value="">
-                <em>Seleccione un maestro</em>
-              </MenuItem>
-              {maestros.map((maestro) => (
-                <MenuItem key={maestro.id} value={maestro.id?.toString()}>
-                  {maestro.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-      </Grid>
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel id="carrera-label">Carrera</InputLabel>
+                <Select
+                  labelId="carrera-label"
+                  value={selectedCarreraFilter}
+                  label="Carrera"
+                  onChange={(e) => setSelectedCarreraFilter(e.target.value)}
+                  disabled={loading}
+                >
+                  <MenuItem value="">
+                    <em>Seleccione una carrera</em>
+                  </MenuItem>
+                  {carreras.map((carrera) => (
+                    <MenuItem key={carrera.id} value={carrera.id.toString()}>
+                      {carrera.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel id="grupo-label">Grupo</InputLabel>
+                <Select
+                  labelId="grupo-label"
+                  value={selectedGrupo}
+                  label="Grupo"
+                  onChange={handleChangeGrupo}
+                  disabled={loading || !selectedCarreraFilter}
+                >
+                  <MenuItem value="">
+                    <em>Seleccione un grupo</em>
+                  </MenuItem>
+                  {getGruposFiltrados().map((grupo) => (
+                    <MenuItem key={grupo.id} value={grupo.id?.toString() || ''}>
+                      {grupo.name} - {grupo.classroom} ({grupo.building})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel id="maestro-label">Seleccionar Maestro</InputLabel>
+                <Select
+                  labelId="maestro-label"
+                  value={selectedMaestro}
+                  label="Seleccionar Maestro"
+                  onChange={handleChangeMaestro}
+                >
+                  <MenuItem value="">
+                    <em>Seleccione un maestro</em>
+                  </MenuItem>
+                  {maestros.map((maestro) => (
+                    <MenuItem key={maestro.id} value={maestro.id?.toString()}>
+                      {maestro.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
 
-      {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress />
-        </Box>
-      )}
+          {loading && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress size={60} thickness={4} />
+            </Box>
+          )}
 
-      {(selectedGrupo || selectedMaestro) && !loading && renderHorarioTable()}
+          {(selectedGrupo || selectedMaestro) && !loading && renderHorarioTable()}
+        </Paper>
 
-      {/* Alertas de éxito y error */}
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={handleCloseAlert}>
-        <Alert onClose={handleCloseAlert} severity="error" sx={{ width: '100%' }}>
-          {error}
-        </Alert>
-      </Snackbar>
+        {/* Alertas de éxito y error */}
+        <Snackbar 
+          open={!!error} 
+          autoHideDuration={6000} 
+          onClose={handleCloseAlert}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert 
+            onClose={handleCloseAlert} 
+            severity="error" 
+            sx={{ 
+              width: '100%',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+              borderRadius: 2,
+            }}
+          >
+            {error}
+          </Alert>
+        </Snackbar>
 
-      <Snackbar open={!!success} autoHideDuration={6000} onClose={handleCloseAlert}>
-        <Alert onClose={handleCloseAlert} severity="success" sx={{ width: '100%' }}>
-          {success}
-        </Alert>
-      </Snackbar>
-    </Box>
+        <Snackbar 
+          open={!!success} 
+          autoHideDuration={6000} 
+          onClose={handleCloseAlert}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert 
+            onClose={handleCloseAlert} 
+            severity="success" 
+            sx={{ 
+              width: '100%',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+              borderRadius: 2,
+            }}
+          >
+            {success}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </ThemeProvider>
   );
-} 
+}

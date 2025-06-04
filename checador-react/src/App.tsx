@@ -33,14 +33,36 @@ import './App.css'
 // Crear un tema personalizado
 const theme = createTheme({
   palette: {
+    mode: 'dark', // Establecer modo oscuro por defecto
     primary: {
-      main: '#4285F4',
+      main: '#7986CB', // Versión más clara del azul índigo para modo oscuro
+      light: '#9FA8DA',
+      dark: '#5C6BC0',
     },
     secondary: {
-      main: '#454646',
+      main: '#FF80AB', // Versión más clara del rosa para modo oscuro
+      light: '#FF99BC',
+      dark: '#F06292',
     },
     background: {
-      default: '#F2F3F8',
+      default: '#121212', // Color de fondo oscuro estándar
+      paper: '#1E1E1E',   // Color de fondo para componentes de papel
+    },
+    text: {
+      primary: '#FFFFFF',
+      secondary: '#B0B0B0',
+    },
+    error: {
+      main: '#F44336',
+    },
+    warning: {
+      main: '#FF9800',
+    },
+    info: {
+      main: '#2196F3',
+    },
+    success: {
+      main: '#4CAF50',
     },
   },
   typography: {

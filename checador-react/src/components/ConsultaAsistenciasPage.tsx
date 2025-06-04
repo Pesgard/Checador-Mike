@@ -41,7 +41,6 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 const StyledBox = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
   '& .maestro-info': {
-    backgroundColor: '#f5f5f5',
     padding: '15px',
     borderRadius: '10px',
     marginBottom: '20px',
@@ -332,10 +331,7 @@ export default function ConsultaAsistenciasPage() {
               onChange={handleDateChange}
               format="dd/MM/yyyy"
               sx={{ 
-                minWidth: 200,
-                '& .MuiInputBase-root': {
-                  backgroundColor: 'white'
-                }
+                minWidth: 200
               }}
               slotProps={{
                 day: (props) => ({

@@ -17,7 +17,6 @@ export default function AdminLayout() {
         component="main" 
         sx={{ 
           flexGrow: 1, 
-          bgcolor: '#F2F3F8',
           overflow: 'auto',
           height: '100%',
           padding: 0

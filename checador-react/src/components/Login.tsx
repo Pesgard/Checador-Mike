@@ -132,7 +132,7 @@ export default function Login() {
         alignItems: 'center',
         height: '100vh',
         width: '100vw',
-        bgcolor: '#F2F3F8'
+        bgcolor: 'background.default'
       }}
     >
       <Container component="main" maxWidth="xs">
@@ -143,17 +143,10 @@ export default function Login() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            borderRadius: 2
+            borderRadius: 2,
+            bgcolor: 'background.paper'
           }}
         >
-          <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
-            <LockOutlinedIcon />
-          </Avatar>
-          
-          <Typography component="h1" variant="h5" mb={2}>
-            Checador Login
-          </Typography>
-          
           <Box 
             component="img" 
             src="/vision2025.jpeg" 
@@ -208,11 +201,11 @@ export default function Login() {
               {loading ? 'Iniciando sesión...' : 'Acceder'}
             </Button>
             
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+            {/* <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
               <Link href="#" variant="body2">
                 Olvidé mi contraseña
               </Link>
-            </Box>
+            </Box> */}
           </Box>
         </Paper>
       </Container>
