@@ -9,7 +9,8 @@ import {
   Link,
   Alert,
   Paper,
-  Avatar
+  Avatar,
+  CircularProgress
 } from '@mui/material'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import { useAuth } from '../contexts/AuthContext'
@@ -27,97 +28,42 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!email || !password) {
-      setError('Por favor ingrese su correo y contraseña')
-      return
-    }
-
     try {
-      setError(null)
       setLoading(true)
-      
-      // Primero intentamos autenticar con Supabase Auth
-      const { error: authError } = await signIn(email, password)
-      
-      if (authError) {
-        // Si falla la autenticación con Supabase Auth, intentamos con la tabla de usuarios
-        try {
-          // Buscar usuario por email y contraseña
-          const { data: usuario, error: dbError } = await supabase
-            .from('usuarios')
-            .select('*')
-            .eq('email', email)
-            .eq('password', password)
-            .single();
-          
-          if (dbError || !usuario) {
-            throw new Error('Credenciales inválidas');
-          }
-          
-          // Simular sesión con el usuario encontrado
-          localStorage.setItem('user', JSON.stringify(usuario));
-          
-          // Redireccionar según el rol
-          switch(usuario.role) {
-            case 'Jefe_de_Grupo':
-              navigate('/jefe/horario')
-              break
-            case 'Maestro':
-              navigate('/maestro/horario')
-              break
-            case 'Checador':
-              navigate('/checador')
-              break
-            case 'Alumno':
-              navigate('/alumno/horario')
-              break
-            case 'Administrador':
-            default:
-              navigate('/admin')
-              break
-          }
-          return;
-        } catch (dbErr: any) {
-          setError('Email o contraseña incorrectos');
-          return;
-        }
-      }
-      
-      // Si la autenticación con Supabase Auth fue exitosa, obtener el rol
-      const { data: userData, error: roleError } = await supabase
+      setError(null)
+
+      // Buscar usuario por email y password
+      const { data: userData, error: userError } = await supabase
         .from('usuarios')
-        .select('*')  // Cambiado de 'role' a '*' para obtener todos los datos
+        .select('*')
         .eq('email', email)
-        .single();
+        .eq('password', password)
+        .single()
+
+      if (userError) {
+        throw new Error('Credenciales inválidas')
+      }
       
-      if (roleError || !userData) {
-        throw new Error('No se encontró información del usuario');
+      if (!userData) {
+        throw new Error('Usuario o contraseña incorrectos')
       }
 
-      // Guardar datos del usuario
-      localStorage.setItem('user', JSON.stringify(userData));
-
-      // Redireccionar según el rol
-      switch(userData.role) {
-        case 'Jefe_de_Grupo':
-          navigate('/jefe/horario')
-          break
-        case 'Maestro':
-          navigate('/maestro/horario')
-          break
-        case 'Checador':
-          navigate('/checador')
-          break
-        case 'Alumno':
-          navigate('/alumno/horario')
-          break
-        case 'Administrador':
-        default:
-          navigate('/admin')
-          break
+      // Iniciar sesión en el contexto
+      await signIn(userData)
+      
+      // Redirigir según el rol
+      const roleRoutes = {
+        Administrador: '/admin/dashboard',
+        Alumno: '/alumno/horario',
+        Jefe_de_Grupo: '/jefe/horario',
+        Checador: '/checador/horario',
+        Maestro: '/maestro/horario'
       }
+      
+      navigate(roleRoutes[userData.role] || '/login')
+      
     } catch (err: any) {
-      console.error('Error completo:', err);
+      console.error('Error en login:', err)
       setError(err.message || 'Error al iniciar sesión')
     } finally {
       setLoading(false)
@@ -177,7 +123,6 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            
             <TextField
               margin="normal"
               required
@@ -190,22 +135,15 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2, borderRadius: '20px', py: 1.2 }}
+              sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Iniciando sesión...' : 'Acceder'}
+              {loading ? <CircularProgress size={24} /> : 'Iniciar Sesión'}
             </Button>
-            
-            {/* <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-              <Link href="#" variant="body2">
-                Olvidé mi contraseña
-              </Link>
-            </Box> */}
           </Box>
         </Paper>
       </Container>

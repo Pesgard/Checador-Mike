@@ -7,7 +7,7 @@ export default function AlumnoSidebar() {
 
   const handleLogout = () => {
     localStorage.removeItem('user');
-    navigate('/');
+    navigate('/login');
   };
 
   return (

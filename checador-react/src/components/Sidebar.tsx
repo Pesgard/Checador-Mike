@@ -71,7 +71,7 @@ export default function Sidebar() {
       // Eliminar los datos del localStorage
       localStorage.removeItem('user')
       // Redireccionar al login
-      navigate('/')
+      navigate('/login')
     } catch (error) {
       console.error('Error signing out:', error)
     }

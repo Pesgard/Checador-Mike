@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import {
   Box,
   Typography,
@@ -102,6 +103,24 @@ export default function GruposPage() {
 
     setLoading(true);
     try {
+      // Verificar si el jefe ya está asignado a otro grupo
+      if (selectedJefe) {
+        const { data: gruposExistentes, error: jefeError } = await supabase
+          .from('grupo')
+          .select('id')
+          .eq('jefe_nocuenta', selectedJefe);
+
+        if (jefeError) {
+          throw new Error('Error al verificar jefe de grupo: ' + jefeError.message);
+        }
+
+        if (gruposExistentes && gruposExistentes.length > 0) {
+          setError('El jefe de grupo seleccionado ya está asignado a otro grupo');
+          setLoading(false);
+          return;
+        }
+      }
+
       const edificioSeleccionado = edificios.find(e => e.facultad === selectedBuilding);
       const carreraSeleccionada = carreras.find(c => c.id.toString() === selectedCarrera);
       

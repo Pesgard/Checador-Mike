@@ -45,19 +45,18 @@ export default function JefeSidebar() {
       
       const user = JSON.parse(userString);
       
-      const { data: grupo, error } = await supabase
+      const { data: grupos, error } = await supabase
         .from('grupo')
         .select('name')
-        .eq('jefe_nocuenta', user.numero_cuenta)
-        .single();
+        .eq('jefe_nocuenta', user.numero_cuenta);
 
       if (error) {
         console.error('Error al cargar grupo:', error);
         return;
       }
 
-      if (grupo) {
-        setGrupoInfo(grupo);
+      if (grupos && grupos.length > 0) {
+        setGrupoInfo(grupos[0]);
       }
     };
 
@@ -71,7 +70,7 @@ export default function JefeSidebar() {
   const handleSignOut = async () => {
     try {
       await signOut()
-      navigate('/')
+      navigate('/login')
     } catch (error) {
       console.error('Error al cerrar sesión:', error)
     }

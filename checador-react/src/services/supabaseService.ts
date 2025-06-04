@@ -83,33 +83,60 @@ export const usuariosService = {
     return data as Usuario;
   },
 
+  async verificarNumeroCuentaUnico(numeroCuenta: string, userId?: number): Promise<boolean> {
+    const query = supabase
+      .from('usuarios')
+      .select('id')
+      .eq('numero_cuenta', numeroCuenta);
+    
+    // Si estamos editando, excluimos el usuario actual
+    if (userId) {
+      query.neq('id', userId);
+    }
+
+    const { data, error } = await query;
+    
+    if (error) throw new Error('Error al verificar número de cuenta: ' + error.message);
+    return data.length === 0; // Retorna true si el número de cuenta NO está en uso
+  },
+
   async create(usuario: Usuario): Promise<Usuario> {
+    // Verificar si se proporcionó un número de cuenta
+    if (usuario.numero_cuenta) {
+      const esUnico = await this.verificarNumeroCuentaUnico(usuario.numero_cuenta);
+      if (!esUnico) {
+        throw new Error('El número de cuenta ya está registrado para otro usuario');
+      }
+    }
+
     const { data, error } = await supabase
       .from('usuarios')
-      .insert({
-        name: usuario.name,
-        email: usuario.email,
-        password: usuario.password,
-        role: usuario.role,
-        numero_cuenta: usuario.numero_cuenta
-      })
+      .insert([usuario])
       .select()
       .single();
-    
-    if (error) throw new Error(error.message);
-    return data as Usuario;
+
+    if (error) throw error;
+    return data;
   },
 
   async update(id: number, usuario: Partial<Usuario>): Promise<Usuario> {
+    // Verificar si se está actualizando el número de cuenta
+    if (usuario.numero_cuenta) {
+      const esUnico = await this.verificarNumeroCuentaUnico(usuario.numero_cuenta, id);
+      if (!esUnico) {
+        throw new Error('El número de cuenta ya está registrado para otro usuario');
+      }
+    }
+
     const { data, error } = await supabase
       .from('usuarios')
       .update(usuario)
       .eq('id', id)
       .select()
       .single();
-    
-    if (error) throw new Error(error.message);
-    return data as Usuario;
+
+    if (error) throw error;
+    return data;
   },
 
   async delete(id: number): Promise<void> {
@@ -145,48 +172,69 @@ export const gruposService = {
   },
 
   async create(grupo: Grupo): Promise<Grupo> {
+    if (grupo.jefe_nocuenta) {
+      const jefeAsignado = await this.verificarJefeAsignado(grupo.jefe_nocuenta);
+      if (jefeAsignado) {
+        throw new Error('El jefe de grupo seleccionado ya está asignado a otro grupo');
+      }
+    }
+
     const { data, error } = await supabase
       .from('grupo')
-      .insert({
-        name: grupo.name,
-        classroom: grupo.classroom,
-        building: grupo.building,
-        jefe_nocuenta: grupo.jefe_nocuenta,
-        carrera_id: grupo.carrera_id
-      })
+      .insert([grupo])
       .select()
       .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async verificarJefeAsignado(jefeNoCuenta: string, grupoId?: number): Promise<boolean> {
+    // Primero verificamos si el usuario es jefe de grupo
+    const { data: usuario, error: userError } = await supabase
+      .from('usuarios')
+      .select('role')
+      .eq('numero_cuenta', jefeNoCuenta)
+      .single();
+
+    if (userError) throw new Error('Error al verificar el rol del usuario');
     
-    if (error) throw new Error(error.message);
-    return data as Grupo;
+    if (usuario.role !== 'Jefe_de_Grupo') {
+      throw new Error('El usuario seleccionado no es Jefe de Grupo');
+    }
+
+    // Luego verificamos si ya está asignado a algún grupo
+    const query = supabase
+      .from('grupo')
+      .select('id')
+      .eq('jefe_nocuenta', jefeNoCuenta);
+    
+    if (grupoId) {
+      query.neq('id', grupoId);
+    }
+
+    const { data, error } = await query;
+    
+    if (error) throw new Error('Error al verificar asignación de jefe: ' + error.message);
+    return data.length > 0;
   },
 
   async update(id: number, grupo: Grupo): Promise<Grupo> {
-    console.log('Datos recibidos para actualizar:', grupo);
-    
-    const updateData = {
-      name: grupo.name,
-      classroom: grupo.classroom || null,
-      building: grupo.building,
-      jefe_nocuenta: grupo.jefe_nocuenta || null,
-      carrera_id: grupo.carrera_id || null
-    };
-
-    console.log('Datos a enviar a la base de datos:', updateData);
+    if (grupo.jefe_nocuenta) {
+      const jefeAsignado = await this.verificarJefeAsignado(grupo.jefe_nocuenta, id);
+      if (jefeAsignado) {
+        throw new Error('El jefe de grupo seleccionado ya está asignado a otro grupo');
+      }
+    }
 
     const { data, error } = await supabase
       .from('grupo')
-      .update(updateData)
+      .update(grupo)
       .eq('id', id)
       .select()
       .single();
 
-    if (error) {
-      console.error('Error en update grupo:', error);
-      throw error;
-    }
-    
-    console.log('Respuesta de la base de datos:', data);
+    if (error) throw error;
     return data;
   },
 
@@ -421,7 +469,68 @@ export const horariosService = {
     return data as HorarioMaestro[];
   },
 
+  async verificarHorarioMaestro(maestroId: number, dia: string, hora: string, horarioId?: number): Promise<boolean> {
+    const query = supabase
+      .from('horario-maestro')
+      .select('*')
+      .eq('maestro_id', maestroId)
+      .eq('dia', dia)
+      .eq('hora', hora);
+    
+    // Si estamos editando un horario existente, excluimos ese horario de la verificación
+    if (horarioId) {
+      query.neq('id', horarioId);
+    }
+
+    const { data, error } = await query;
+    
+    if (error) throw new Error(error.message);
+    return data.length > 0; // Retorna true si ya existe un horario
+  },
+
+  async verificarHorarioGrupo(grupoId: number, dia: string, hora: string, horarioId?: number): Promise<boolean> {
+    const query = supabase
+      .from('horario-maestro')
+      .select('*')
+      .eq('grupo_id', grupoId)
+      .eq('dia', dia)
+      .eq('hora', hora);
+    
+    // Si estamos editando un horario existente, excluimos ese horario de la verificación
+    if (horarioId) {
+      query.neq('id', horarioId);
+    }
+
+    const { data, error } = await query;
+    
+    if (error) throw new Error(error.message);
+    return data.length > 0; // Retorna true si ya existe un horario
+  },
+
   async create(horario: HorarioMaestro): Promise<HorarioMaestro> {
+    // Verificar si el maestro ya tiene clase en ese horario
+    const maestroOcupado = await this.verificarHorarioMaestro(
+      horario.maestro_id,
+      horario.dia,
+      horario.hora
+    );
+    
+    if (maestroOcupado) {
+      throw new Error('El maestro ya tiene una clase asignada en este horario');
+    }
+
+    // Verificar si el grupo ya tiene clase en ese horario
+    const grupoOcupado = await this.verificarHorarioGrupo(
+      horario.grupo_id,
+      horario.dia,
+      horario.hora
+    );
+    
+    if (grupoOcupado) {
+      throw new Error('El grupo ya tiene una clase asignada en este horario');
+    }
+
+    // Si no hay conflictos, crear el horario
     const { data, error } = await supabase
       .from('horario-maestro')
       .insert(horario)
@@ -433,6 +542,40 @@ export const horariosService = {
   },
 
   async update(id: number, horario: Partial<HorarioMaestro>): Promise<HorarioMaestro> {
+    // Si se está actualizando el día u hora, verificar conflictos
+    if (horario.dia || horario.hora) {
+      const horarioActual = await this.getById(id);
+      if (!horarioActual) throw new Error('Horario no encontrado');
+
+      const diaVerificar = horario.dia || horarioActual.dia;
+      const horaVerificar = horario.hora || horarioActual.hora;
+
+      // Verificar conflictos con otros horarios del maestro
+      const maestroOcupado = await this.verificarHorarioMaestro(
+        horario.maestro_id || horarioActual.maestro_id,
+        diaVerificar,
+        horaVerificar,
+        id // Excluir el horario actual de la verificación
+      );
+      
+      if (maestroOcupado) {
+        throw new Error('El maestro ya tiene una clase asignada en este horario');
+      }
+
+      // Verificar conflictos con otros horarios del grupo
+      const grupoOcupado = await this.verificarHorarioGrupo(
+        horario.grupo_id || horarioActual.grupo_id,
+        diaVerificar,
+        horaVerificar,
+        id // Excluir el horario actual de la verificación
+      );
+      
+      if (grupoOcupado) {
+        throw new Error('El grupo ya tiene una clase asignada en este horario');
+      }
+    }
+
+    // Si no hay conflictos, actualizar el horario
     const { data, error } = await supabase
       .from('horario-maestro')
       .update(horario)
