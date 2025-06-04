@@ -1,42 +1,31 @@
+import { useState, useEffect } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { Box, CircularProgress } from '@mui/material'
 import { useAuth } from '../contexts/AuthContext'
-
-type RoleRoutes = {
-  [key: string]: {
-    allowedPaths: string[];
-    defaultPath: string;
-  }
-}
-
-const ROLE_ROUTES: RoleRoutes = {
-  Administrador: {
-    allowedPaths: ['/admin'],
-    defaultPath: '/admin/dashboard'
-  },
-  Alumno: {
-    allowedPaths: ['/alumno'],
-    defaultPath: '/alumno/horario'
-  },
-  Jefe_de_Grupo: {
-    allowedPaths: ['/jefe'],
-    defaultPath: '/jefe/horario'
-  },
-  Checador: {
-    allowedPaths: ['/checador'],
-    defaultPath: '/checador/horario'
-  },
-  Maestro: {
-    allowedPaths: ['/maestro'],
-    defaultPath: '/maestro/horario'
-  }
-}
+import { Usuario } from '../services/supabaseService'
 
 export default function ProtectedRoute() {
   const { user, loading } = useAuth()
+  const [localUser, setLocalUser] = useState<Usuario | null>(null)
+  const [localLoading, setLocalLoading] = useState(true)
   const location = useLocation()
 
-  if (loading) {
+  useEffect(() => {
+    // Verificar si hay un usuario almacenado en localStorage
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      try {
+        const userData = JSON.parse(userStr)
+        setLocalUser(userData)
+      } catch (e) {
+        localStorage.removeItem('user')
+      }
+    }
+    setLocalLoading(false)
+  }, [])
+
+  // Show loading spinner while checking auth
+  if (loading || localLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <CircularProgress />
@@ -44,25 +33,31 @@ export default function ProtectedRoute() {
     )
   }
 
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+  const currentUser = user || localUser
+  if (!currentUser) {
+    return <Navigate to="/" replace />
   }
 
-  const userRole = user.role
-  const roleConfig = ROLE_ROUTES[userRole]
+  // Verificar que el usuario acceda solo a las rutas de su rol
+  const path = location.pathname
+  const userRole = currentUser.role
 
-  if (!roleConfig) {
-    return <Navigate to="/login" replace />
+  if (
+    (userRole === 'Administrador' && !path.startsWith('/admin')) ||
+    (userRole === 'Maestro' && !path.startsWith('/maestro')) ||
+    (userRole === 'Checador' && !path.startsWith('/checador')) ||
+    (userRole === 'Jefe_de_Grupo' && !path.startsWith('/jefe'))
+  ) {
+    // Redirigir al usuario a su ruta correspondiente
+    const defaultRoutes: Record<string, string> = {
+      'Administrador': '/admin',
+      'Maestro': '/maestro/horario',
+      'Checador': '/checador',
+      'Jefe_de_Grupo': '/jefe/horario'
+    }
+    return <Navigate to={defaultRoutes[userRole] || '/'} replace />
   }
 
-  // Verificar si la ruta actual está permitida para el rol del usuario
-  const isAllowedPath = roleConfig.allowedPaths.some(path => 
-    location.pathname.startsWith(path)
-  )
-
-  if (!isAllowedPath) {
-    return <Navigate to={roleConfig.defaultPath} replace />
-  }
-
+  // Render child routes if authenticated
   return <Outlet />
 } 

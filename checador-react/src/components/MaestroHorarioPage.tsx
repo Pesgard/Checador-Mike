@@ -376,6 +376,14 @@ export default function MaestroHorarioPage() {
                               >
                                 Ausente
                               </Button>
+                              <Button
+                                size="small"
+                                variant={horario.asistencia === 'pendiente' ? "contained" : "outlined"}
+                                onClick={() => handleToggleAsistencia(diaActual, hora, 'pendiente')}
+                                color="warning"
+                              >
+                                Pendiente
+                              </Button>
                             </Box>
                           </Box>
                         ) : (

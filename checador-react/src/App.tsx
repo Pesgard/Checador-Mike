@@ -79,45 +79,45 @@ function App() {
           <BrowserRouter>
             <AuthProvider>
               <Routes>
-                <Route path="/login" element={<Login />} />
+                {/* Public route */}
+                <Route path="/" element={<Login />} />
                 
-                {/* Rutas protegidas */}
+                {/* Protected admin routes */}
                 <Route element={<ProtectedRoute />}>
-                  {/* Rutas de Administrador */}
-                  <Route path="/admin" element={<AdminLayout />}>
-                    <Route path="dashboard" element={<AdminDashboard />} />
-                    <Route path="horario" element={<HorarioPage />} />
-                    <Route path="horarios" element={<HorariosPage />} />
-                    <Route path="grupos" element={<GruposPage />} />
-                    <Route path="usuarios" element={<UsuariosPage />} />
-                    <Route path="materias" element={<MateriasPage />} />
-                    <Route path="carreras" element={<CarrerasPage />} />
-                    <Route path="temarios" element={<TemarioPage />} />
-                    <Route path="checador-horario" element={<ChecadorHorarioPage />} />
-                    <Route path="edificios" element={<EdificiosPage />} />
-                    <Route path="consulta-asistencias" element={<ConsultaAsistenciasPage />} />
+                  <Route element={<AdminLayout />}>
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/admin/horario" element={<HorarioPage />} />
+                    <Route path="/admin/horarios" element={<HorariosPage />} />
+                    <Route path="/admin/grupos" element={<GruposPage />} />
+                    <Route path="/admin/usuarios" element={<UsuariosPage />} />
+                    <Route path="/admin/materias" element={<MateriasPage />} />
+                    <Route path="/admin/carreras" element={<CarrerasPage />} />
+                    <Route path="/admin/temarios" element={<TemarioPage />} />
+                    <Route path="/admin/checador-horario" element={<ChecadorHorarioPage />} />
+                    <Route path="/admin/edificios" element={<EdificiosPage />} />
+                    <Route path="/admin/consulta-asistencias" element={<ConsultaAsistenciasPage />} />
                   </Route>
+                </Route>
+                
+                {/* Rutas de Jefe de Grupo */}
+                <Route element={<JefeLayout />}>
+                  <Route path="/jefe/horario" element={<JefeHorarioPage />} />
+                  <Route path="/jefe/buscar" element={<BuscarMaestroPage />} />
+                </Route>
 
-                  {/* Rutas de Alumno */}
-                  <Route path="/alumno" element={<AlumnoLayout />}>
-                    <Route path="horario" element={<AlumnoHorarioPage />} />
-                  </Route>
-
-                  {/* Rutas de Jefe de Grupo */}
-                  <Route path="/jefe" element={<JefeLayout />}>
-                    <Route path="horario" element={<JefeHorarioPage />} />
-                    <Route path="buscar" element={<BuscarMaestroPage />} />
-                  </Route>
-
-                  {/* Rutas de Checador */}
-                  <Route path="/checador" element={<ChecadorLayout />}>
-                    <Route path="horario" element={<ChecadorHorarioPage />} />
-                  </Route>
-
-                  {/* Rutas de Maestro */}
-                  <Route path="/maestro" element={<MaestroLayout />}>
-                    <Route path="horario" element={<MaestroHorarioPage />} />
-                  </Route>
+                {/* Rutas de Maestro */}
+                <Route element={<MaestroLayout />}>
+                  <Route path="/maestro/horario" element={<MaestroHorarioPage />} />
+                </Route>
+                
+                {/* Rutas de Checador */}
+                <Route path="/checador" element={<ChecadorLayout />}>
+                  <Route index element={<ChecadorHorarioPage />} />
+                </Route>
+                
+                {/* Rutas de Alumno */}
+                <Route element={<AlumnoLayout />}>
+                  <Route path="/alumno/horario" element={<AlumnoHorarioPage />} />
                 </Route>
                 
                 {/* Catch-all route */}
