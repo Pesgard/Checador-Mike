@@ -14,6 +14,7 @@ import {
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { authService } from '../services/supabaseService'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -41,23 +42,40 @@ export default function Login() {
       if (authError) {
         // Si falla la autenticación con Supabase Auth, intentamos con la tabla de usuarios
         try {
-          // Buscar usuario por email
-          const { data: usuarios, error: dbError } = await supabase
+          // Buscar usuario por email y contraseña
+          const { data: usuario, error: dbError } = await supabase
             .from('usuarios')
             .select('*')
             .eq('email', email)
-            .eq('password', password) // Nota: En producción, las contraseñas deberían estar hasheadas
+            .eq('password', password)
             .single();
           
-          if (dbError || !usuarios) {
+          if (dbError || !usuario) {
             throw new Error('Credenciales inválidas');
           }
           
           // Simular sesión con el usuario encontrado
-          localStorage.setItem('user', JSON.stringify(usuarios));
+          localStorage.setItem('user', JSON.stringify(usuario));
           
-          // Redireccionar al dashboard
-          navigate('/admin');
+          // Redireccionar según el rol
+          switch(usuario.role) {
+            case 'Jefe_de_Grupo':
+              navigate('/jefe/horario')
+              break
+            case 'Maestro':
+              navigate('/maestro/horario')
+              break
+            case 'Checador':
+              navigate('/checador')
+              break
+            case 'Alumno':
+              navigate('/alumno/horario')
+              break
+            case 'Administrador':
+            default:
+              navigate('/admin')
+              break
+          }
           return;
         } catch (dbErr: any) {
           setError('Email o contraseña incorrectos');
@@ -65,9 +83,41 @@ export default function Login() {
         }
       }
       
-      // Successful login, navigate to admin menu
-      navigate('/admin')
+      // Si la autenticación con Supabase Auth fue exitosa, obtener el rol
+      const { data: userData, error: roleError } = await supabase
+        .from('usuarios')
+        .select('*')  // Cambiado de 'role' a '*' para obtener todos los datos
+        .eq('email', email)
+        .single();
+      
+      if (roleError || !userData) {
+        throw new Error('No se encontró información del usuario');
+      }
+
+      // Guardar datos del usuario
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // Redireccionar según el rol
+      switch(userData.role) {
+        case 'Jefe_de_Grupo':
+          navigate('/jefe/horario')
+          break
+        case 'Maestro':
+          navigate('/maestro/horario')
+          break
+        case 'Checador':
+          navigate('/checador')
+          break
+        case 'Alumno':
+          navigate('/alumno/horario')
+          break
+        case 'Administrador':
+        default:
+          navigate('/admin')
+          break
+      }
     } catch (err: any) {
+      console.error('Error completo:', err);
       setError(err.message || 'Error al iniciar sesión')
     } finally {
       setLoading(false)
@@ -82,7 +132,7 @@ export default function Login() {
         alignItems: 'center',
         height: '100vh',
         width: '100vw',
-        bgcolor: '#F2F3F8'
+        bgcolor: 'background.default'
       }}
     >
       <Container component="main" maxWidth="xs">
@@ -93,17 +143,10 @@ export default function Login() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            borderRadius: 2
+            borderRadius: 2,
+            bgcolor: 'background.paper'
           }}
         >
-          <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
-            <LockOutlinedIcon />
-          </Avatar>
-          
-          <Typography component="h1" variant="h5" mb={2}>
-            Checador Login
-          </Typography>
-          
           <Box 
             component="img" 
             src="/vision2025.jpeg" 
@@ -158,11 +201,11 @@ export default function Login() {
               {loading ? 'Iniciando sesión...' : 'Acceder'}
             </Button>
             
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+            {/* <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
               <Link href="#" variant="body2">
                 Olvidé mi contraseña
               </Link>
-            </Box>
+            </Box> */}
           </Box>
         </Paper>
       </Container>

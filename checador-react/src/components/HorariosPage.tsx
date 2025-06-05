@@ -29,10 +29,12 @@ import {
   usuariosService, 
   materiasService, 
   gruposService, 
+  carrerasService,
   HorarioMaestro,
   Usuario,
   Materia,
-  Grupo
+  Grupo,
+  Carrera
 } from '../services/supabaseService';
 
 // Días de la semana
@@ -61,7 +63,7 @@ export default function HorariosPage() {
   const [selectedMaestro, setSelectedMaestro] = useState<string>('');
   const [selectedGrupo, setSelectedGrupo] = useState<string>('');
   const [selectedMateria, setSelectedMateria] = useState<string>('');
-  const [selectedDia, setSelectedDia] = useState<string>('');
+  const [selectedDias, setSelectedDias] = useState<string[]>([]);
   const [selectedHora, setSelectedHora] = useState<string>('');
   
   // Estado para control de UI
@@ -70,6 +72,14 @@ export default function HorariosPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [horarioSeleccionado, setHorarioSeleccionado] = useState<HorarioMaestro | null>(null);
+  
+  // Agregar estado para carreras y filtros
+  const [carreras, setCarreras] = useState<Carrera[]>([]);
+  const [filtroCarrera, setFiltroCarrera] = useState<string>('');
+  const [filtroTipo, setFiltroTipo] = useState<'carrera' | 'maestro'>('carrera');
+  
+  // Agregar estado para grupo filtrado
+  const [filtroGrupo, setFiltroGrupo] = useState<string>('');
   
   // Cargar datos iniciales
   useEffect(() => {
@@ -92,6 +102,10 @@ export default function HorariosPage() {
         // Cargar horarios existentes
         const horariosData = await horariosService.getAll();
         setHorarios(horariosData);
+        
+        // Cargar carreras
+        const carrerasData = await carrerasService.getAll();
+        setCarreras(carrerasData);
       } catch (err: any) {
         setError(err.message || 'Error al cargar datos');
       } finally {
@@ -117,14 +131,34 @@ export default function HorariosPage() {
     setSelectedMateria(event.target.value);
   };
   
-  // Manejar cambio de día
-  const handleChangeDia = (event: SelectChangeEvent) => {
-    setSelectedDia(event.target.value);
+  // Manejar cambio de días
+  const handleChangeDias = (event: SelectChangeEvent<string[]>) => {
+    const value = event.target.value;
+    setSelectedDias(typeof value === 'string' ? value.split(',') : value);
   };
   
   // Manejar cambio de hora
   const handleChangeHora = (event: SelectChangeEvent) => {
     setSelectedHora(event.target.value);
+  };
+  
+  // Agregar manejador para cambio de filtro tipo
+  const handleChangeFiltroTipo = (event: SelectChangeEvent) => {
+    setFiltroTipo(event.target.value as 'carrera' | 'maestro');
+    setFiltroCarrera('');
+    setFiltroGrupo('');
+    setSelectedMaestro('');
+  };
+  
+  // Actualizar manejador para cambio de carrera
+  const handleChangeCarrera = (event: SelectChangeEvent) => {
+    setFiltroCarrera(event.target.value);
+    setFiltroGrupo(''); // Resetear el grupo seleccionado
+  };
+  
+  // Agregar manejador para cambio de grupo
+  const handleChangeFiltroGrupo = (event: SelectChangeEvent) => {
+    setFiltroGrupo(event.target.value);
   };
   
   // Abrir diálogo para agregar horario
@@ -135,7 +169,7 @@ export default function HorariosPage() {
     setSelectedMaestro('');
     setSelectedGrupo('');
     setSelectedMateria('');
-    setSelectedDia('');
+    setSelectedDias([]);
     setSelectedHora('');
   };
   
@@ -151,7 +185,7 @@ export default function HorariosPage() {
         horario.maestro_id === Number(selectedMaestro) &&
         horario.grupo_id === Number(selectedGrupo) &&
         horario.materia_id === Number(selectedMateria) &&
-        horario.dia === selectedDia &&
+        horario.dia === selectedDias[0] &&
         horario.hora === selectedHora
     );
   };
@@ -161,7 +195,7 @@ export default function HorariosPage() {
     return horarios.some(
       horario => 
         horario.maestro_id === Number(selectedMaestro) &&
-        horario.dia === selectedDia &&
+        horario.dia === selectedDias[0] &&
         horario.hora === selectedHora
     );
   };
@@ -171,15 +205,26 @@ export default function HorariosPage() {
     return horarios.some(
       horario => 
         horario.grupo_id === Number(selectedGrupo) &&
-        horario.dia === selectedDia &&
+        horario.dia === selectedDias[0] &&
         horario.hora === selectedHora
     );
+  };
+  
+  // Obtener grupos filtrados por carrera
+  const getGruposPorCarrera = () => {
+    if (!filtroCarrera) return [];
+    
+    // Ahora filtramos por carrera_id en lugar de por el nombre
+    const carreraSeleccionada = carreras.find(c => c.nombre === filtroCarrera);
+    if (!carreraSeleccionada) return [];
+    
+    return grupos.filter(grupo => grupo.carrera_id === carreraSeleccionada.id);
   };
   
   // Agregar nuevo horario
   const handleAddHorario = async () => {
     // Validaciones
-    if (!selectedMaestro || !selectedGrupo || !selectedMateria || !selectedDia || !selectedHora) {
+    if (!selectedMaestro || !selectedGrupo || !selectedMateria || selectedDias.length === 0 || !selectedHora) {
       setError('Debe completar todos los campos');
       return;
     }
@@ -201,25 +246,60 @@ export default function HorariosPage() {
     
     setLoading(true);
     try {
-      // Crear nuevo horario
-      const nuevoHorario: HorarioMaestro = {
-        maestro_id: Number(selectedMaestro),
-        grupo_id: Number(selectedGrupo),
-        materia_id: Number(selectedMateria),
-        dia: selectedDia,
-        hora: selectedHora,
-        asistencia: false
-      };
-      
-      await horariosService.create(nuevoHorario);
-      setSuccess('Horario agregado correctamente');
+      // Crear horarios para cada día seleccionado
+      for (const dia of selectedDias) {
+        if (horarios.some(
+          horario => 
+            horario.maestro_id === Number(selectedMaestro) &&
+            horario.grupo_id === Number(selectedGrupo) &&
+            horario.materia_id === Number(selectedMateria) &&
+            horario.dia === dia &&
+            horario.hora === selectedHora
+        )) {
+          setError(`Ya existe un horario para el día ${dia} en esta configuración`);
+          continue;
+        }
+
+        if (horarios.some(
+          horario => 
+            horario.maestro_id === Number(selectedMaestro) &&
+            horario.dia === dia &&
+            horario.hora === selectedHora
+        )) {
+          setError(`El maestro ya tiene una clase asignada el día ${dia} en este horario`);
+          continue;
+        }
+
+        if (horarios.some(
+          horario => 
+            horario.grupo_id === Number(selectedGrupo) &&
+            horario.dia === dia &&
+            horario.hora === selectedHora
+        )) {
+          setError(`El grupo ya tiene una clase asignada el día ${dia} en este horario`);
+          continue;
+        }
+
+        const nuevoHorario: HorarioMaestro = {
+          maestro_id: Number(selectedMaestro),
+          grupo_id: Number(selectedGrupo),
+          materia_id: Number(selectedMateria),
+          dia: dia,
+          hora: selectedHora,
+          asistencia: false
+        };
+        
+        await horariosService.create(nuevoHorario);
+      }
+
+      setSuccess('Horarios agregados correctamente');
       handleCloseDialog();
       
       // Recargar horarios
       const horariosData = await horariosService.getAll();
       setHorarios(horariosData);
     } catch (err: any) {
-      setError(err.message || 'Error al agregar horario');
+      setError(err.message || 'Error al agregar horarios');
     } finally {
       setLoading(false);
     }
@@ -231,7 +311,7 @@ export default function HorariosPage() {
     setSelectedMaestro(horario.maestro_id.toString());
     setSelectedGrupo(horario.grupo_id.toString());
     setSelectedMateria(horario.materia_id.toString());
-    setSelectedDia(horario.dia);
+    setSelectedDias([horario.dia]);
     setSelectedHora(horario.hora);
     setOpenDialog(true);
   };
@@ -241,7 +321,7 @@ export default function HorariosPage() {
     if (!horarioSeleccionado) return;
     
     // Validaciones
-    if (!selectedMaestro || !selectedGrupo || !selectedMateria || !selectedDia || !selectedHora) {
+    if (!selectedMaestro || !selectedGrupo || !selectedMateria || selectedDias.length === 0 || !selectedHora) {
       setError('Debe completar todos los campos');
       return;
     }
@@ -253,7 +333,7 @@ export default function HorariosPage() {
         horario.maestro_id === Number(selectedMaestro) &&
         horario.grupo_id === Number(selectedGrupo) &&
         horario.materia_id === Number(selectedMateria) &&
-        horario.dia === selectedDia &&
+        horario.dia === selectedDias[0] &&
         horario.hora === selectedHora
     );
     
@@ -267,7 +347,7 @@ export default function HorariosPage() {
       horario => 
         horario.id !== horarioSeleccionado.id &&
         horario.maestro_id === Number(selectedMaestro) &&
-        horario.dia === selectedDia &&
+        horario.dia === selectedDias[0] &&
         horario.hora === selectedHora
     );
     
@@ -281,7 +361,7 @@ export default function HorariosPage() {
       horario => 
         horario.id !== horarioSeleccionado.id &&
         horario.grupo_id === Number(selectedGrupo) &&
-        horario.dia === selectedDia &&
+        horario.dia === selectedDias[0] &&
         horario.hora === selectedHora
     );
     
@@ -297,7 +377,7 @@ export default function HorariosPage() {
         maestro_id: Number(selectedMaestro),
         grupo_id: Number(selectedGrupo),
         materia_id: Number(selectedMateria),
-        dia: selectedDia,
+        dia: selectedDias[0],
         hora: selectedHora
       };
       
@@ -360,12 +440,112 @@ export default function HorariosPage() {
     return grupo ? grupo.name : 'Desconocido';
   };
   
+  // Actualizar función para filtrar horarios
+  const getHorariosFiltrados = () => {
+    if (filtroTipo === 'maestro' && selectedMaestro) {
+      return horarios.filter(h => h.maestro_id === Number(selectedMaestro));
+    }
+
+    if (filtroTipo === 'carrera') {
+      let horariosFiltered = [...horarios];
+      
+      if (filtroGrupo) {
+        horariosFiltered = horariosFiltered.filter(h => h.grupo_id === Number(filtroGrupo));
+      } else if (filtroCarrera) {
+        const gruposCarrera = getGruposPorCarrera();
+        const gruposIds = gruposCarrera.map(g => g.id);
+        horariosFiltered = horariosFiltered.filter(h => gruposIds.includes(h.grupo_id));
+      }
+      
+      return horariosFiltered;
+    }
+
+    return horarios;
+  };
+  
   return (
     <Box sx={{ p: 3 }}>
       <Paper sx={{ p: 4, maxWidth: 1200, mx: 'auto' }}>
         <Typography variant="h5" gutterBottom align="center" sx={{ mb: 3 }}>
           Gestión de Horarios
         </Typography>
+        
+        {/* Agregar filtros */}
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid item xs={12} md={4}>
+            <FormControl fullWidth>
+              <InputLabel>Ver por</InputLabel>
+              <Select
+                value={filtroTipo}
+                label="Ver por"
+                onChange={handleChangeFiltroTipo}
+              >
+                <MenuItem value="carrera">Carrera y Grupo</MenuItem>
+                <MenuItem value="maestro">Maestro</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {filtroTipo === 'carrera' && (
+            <>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth>
+                  <InputLabel>Carrera</InputLabel>
+                  <Select
+                    value={filtroCarrera}
+                    label="Carrera"
+                    onChange={handleChangeCarrera}
+                  >
+                    {carreras.map((carrera) => (
+                      <MenuItem key={carrera.id} value={carrera.nombre}>
+                        {carrera.nombre}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {filtroCarrera && (
+                <Grid item xs={12} md={4}>
+                  <FormControl fullWidth>
+                    <InputLabel>Grupo</InputLabel>
+                    <Select
+                      value={filtroGrupo}
+                      label="Grupo"
+                      onChange={handleChangeFiltroGrupo}
+                    >
+                      <MenuItem value="">Todos los grupos</MenuItem>
+                      {getGruposPorCarrera().map((grupo) => (
+                        <MenuItem key={grupo.id} value={grupo.id.toString()}>
+                          {grupo.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              )}
+            </>
+          )}
+
+          {filtroTipo === 'maestro' && (
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel>Maestro</InputLabel>
+                <Select
+                  value={selectedMaestro}
+                  label="Maestro"
+                  onChange={handleChangeMaestro}
+                >
+                  {maestros.map((maestro) => (
+                    <MenuItem key={maestro.id} value={maestro.id?.toString()}>
+                      {maestro.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
+        </Grid>
         
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
           <Button 
@@ -381,7 +561,7 @@ export default function HorariosPage() {
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
             <CircularProgress />
           </Box>
-        ) : horarios.length === 0 ? (
+        ) : getHorariosFiltrados().length === 0 ? (
           <Typography align="center" sx={{ my: 4 }}>
             No hay horarios registrados
           </Typography>
@@ -390,20 +570,38 @@ export default function HorariosPage() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Maestro</TableCell>
+                  {filtroTipo === 'carrera' ? (
+                    <>
+                      <TableCell>Grupo</TableCell>
+                      <TableCell>Maestro</TableCell>
+                    </>
+                  ) : (
+                    <>
+                      <TableCell>Maestro</TableCell>
+                      <TableCell>Grupo</TableCell>
+                    </>
+                  )}
                   <TableCell>Materia</TableCell>
-                  <TableCell>Grupo</TableCell>
-                  <TableCell>Día</TableCell>
+                  <TableCell>Días</TableCell>
                   <TableCell>Hora</TableCell>
                   <TableCell align="center">Acciones</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {horarios.map((horario) => (
+                {getHorariosFiltrados().map((horario) => (
                   <TableRow key={horario.id}>
-                    <TableCell>{getMaestroNombre(horario.maestro_id)}</TableCell>
+                    {filtroTipo === 'carrera' ? (
+                      <>
+                        <TableCell>{getGrupoNombre(horario.grupo_id)}</TableCell>
+                        <TableCell>{getMaestroNombre(horario.maestro_id)}</TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell>{getMaestroNombre(horario.maestro_id)}</TableCell>
+                        <TableCell>{getGrupoNombre(horario.grupo_id)}</TableCell>
+                      </>
+                    )}
                     <TableCell>{getMateriaNombre(horario.materia_id)}</TableCell>
-                    <TableCell>{getGrupoNombre(horario.grupo_id)}</TableCell>
                     <TableCell>{horario.dia}</TableCell>
                     <TableCell>{horario.hora}</TableCell>
                     <TableCell align="center">
@@ -491,11 +689,13 @@ export default function HorariosPage() {
             
             <Grid item xs={12} md={6}>
               <FormControl fullWidth margin="normal">
-                <InputLabel>Día</InputLabel>
+                <InputLabel>Días</InputLabel>
                 <Select
-                  value={selectedDia}
-                  label="Día"
-                  onChange={handleChangeDia}
+                  multiple
+                  value={selectedDias}
+                  label="Días"
+                  onChange={handleChangeDias}
+                  renderValue={(selected) => (selected as string[]).join(', ')}
                 >
                   {DIAS_SEMANA.map((dia) => (
                     <MenuItem key={dia} value={dia}>

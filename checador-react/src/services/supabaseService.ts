@@ -1,19 +1,28 @@
 import { supabase } from '../lib/supabase';
 
-// Interfaces para los tipos de datos
+export type UserRole = 
+  | 'Alumno' 
+  | 'Jefe_de_Grupo' 
+  | 'Checador'
+  | 'Maestro' 
+  | 'Administrador';
+
 export interface Usuario {
   id?: number;
   name: string;
   email: string;
   password: string;
-  role: 'Alumno' | 'Jefe de grupo' | 'Coordinador' | 'Maestro' | 'Administrador';
+  role: UserRole;
+  numero_cuenta?: string;
 }
 
 export interface Grupo {
   id?: number;
   name: string;
-  classroom: string;
-  building: string;
+  classroom?: string;
+  building?: string;
+  jefe_nocuenta?: string;
+  carrera_id?: number;
 }
 
 export interface Materia {
@@ -26,7 +35,7 @@ export interface Materia {
 export interface Carrera {
   id?: number;
   nombre: string;
-  semestres: number;
+  semestres?: number;
 }
 
 export interface HorarioMaestro {
@@ -37,6 +46,19 @@ export interface HorarioMaestro {
   dia: string;
   hora: string;
   asistencia: boolean;
+}
+
+export interface Edificio {
+  id?: number;
+  facultad: string;
+  nombre?: string;
+}
+
+export interface Asistencia {
+  id: number;
+  horario_id: number;
+  fecha: string;
+  asistencia: 'Asistió' | 'Falta' | 'Retardo';
 }
 
 // Servicios CRUD para usuarios
@@ -64,7 +86,13 @@ export const usuariosService = {
   async create(usuario: Usuario): Promise<Usuario> {
     const { data, error } = await supabase
       .from('usuarios')
-      .insert(usuario)
+      .insert({
+        name: usuario.name,
+        email: usuario.email,
+        password: usuario.password,
+        role: usuario.role,
+        numero_cuenta: usuario.numero_cuenta
+      })
       .select()
       .single();
     
@@ -119,7 +147,13 @@ export const gruposService = {
   async create(grupo: Grupo): Promise<Grupo> {
     const { data, error } = await supabase
       .from('grupo')
-      .insert(grupo)
+      .insert({
+        name: grupo.name,
+        classroom: grupo.classroom,
+        building: grupo.building,
+        jefe_nocuenta: grupo.jefe_nocuenta,
+        carrera_id: grupo.carrera_id
+      })
       .select()
       .single();
     
@@ -127,16 +161,33 @@ export const gruposService = {
     return data as Grupo;
   },
 
-  async update(id: number, grupo: Partial<Grupo>): Promise<Grupo> {
+  async update(id: number, grupo: Grupo): Promise<Grupo> {
+    console.log('Datos recibidos para actualizar:', grupo);
+    
+    const updateData = {
+      name: grupo.name,
+      classroom: grupo.classroom || null,
+      building: grupo.building,
+      jefe_nocuenta: grupo.jefe_nocuenta || null,
+      carrera_id: grupo.carrera_id || null
+    };
+
+    console.log('Datos a enviar a la base de datos:', updateData);
+
     const { data, error } = await supabase
       .from('grupo')
-      .update(grupo)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
+
+    if (error) {
+      console.error('Error en update grupo:', error);
+      throw error;
+    }
     
-    if (error) throw new Error(error.message);
-    return data as Grupo;
+    console.log('Respuesta de la base de datos:', data);
+    return data;
   },
 
   async delete(id: number): Promise<void> {
@@ -170,6 +221,16 @@ export const gruposService = {
     // Obtener valores únicos
     const buildings = data.map(item => item.building);
     return [...new Set(buildings)];
+  },
+
+  async getByCarrera(carreraId: number): Promise<Grupo[]> {
+    const { data, error } = await supabase
+      .from('grupo')
+      .select('*')
+      .eq('carrera_id', carreraId);
+    
+    if (error) throw new Error(error.message);
+    return data as Grupo[];
   }
 };
 
@@ -264,10 +325,14 @@ export const carrerasService = {
   async getAll(): Promise<Carrera[]> {
     const { data, error } = await supabase
       .from('carreras')
-      .select('*');
+      .select('*')
+      .order('nombre');
     
-    if (error) throw new Error(error.message);
-    return data as Carrera[];
+    if (error) {
+      console.error('Error en getAll carreras:', error);
+      throw new Error(error.message);
+    }
+    return data;
   },
 
   async getById(id: number): Promise<Carrera | null> {
@@ -398,5 +463,250 @@ export const horariosService = {
     
     if (error) throw new Error(error.message);
     return data as HorarioMaestro;
+  }
+};
+
+export const authService = {
+  async ejecutarInsercionAutomatica() {
+    const { data, error } = await supabase
+      .rpc('insertar_asistencia_auto');
+    
+    if (error) throw new Error(error.message);
+    return data;
+  }
+};
+
+export const edificiosService = {
+  async getAll(): Promise<Edificio[]> {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      throw new Error('No hay sesión activa');
+    }
+
+    const user = JSON.parse(userStr);
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    const { data, error } = await supabase
+      .from('edificios')
+      .select('*')
+      .order('facultad', { ascending: true });
+    
+    if (error) {
+      console.error('Error en getAll edificios:', error);
+      throw new Error(error.message);
+    }
+    return data as Edificio[];
+  },
+
+  async create(edificio: Edificio): Promise<Edificio> {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      throw new Error('No hay sesión activa');
+    }
+
+    const user = JSON.parse(userStr);
+    if (!user || user.role !== 'Administrador') {
+      throw new Error('No tiene permisos para crear edificios');
+    }
+
+    const { data, error } = await supabase
+      .from('edificios')
+      .insert(edificio)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error en create edificio:', error);
+      throw new Error(error.message);
+    }
+    return data as Edificio;
+  },
+
+  async update(id: number, edificio: Edificio): Promise<Edificio> {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      throw new Error('No hay sesión activa');
+    }
+
+    const user = JSON.parse(userStr);
+    if (!user || user.role !== 'Administrador') {
+      throw new Error('No tiene permisos para actualizar edificios');
+    }
+
+    const { data, error } = await supabase
+      .from('edificios')
+      .update(edificio)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error en update edificio:', error);
+      throw error;
+    }
+    return data;
+  },
+
+  async delete(id: number): Promise<void> {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      throw new Error('No hay sesión activa');
+    }
+
+    const user = JSON.parse(userStr);
+    if (!user || user.role !== 'Administrador') {
+      throw new Error('No tiene permisos para eliminar edificios');
+    }
+
+    const { error } = await supabase
+      .from('edificios')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('Error en delete edificio:', error);
+      throw new Error(error.message);
+    }
+  }
+};
+
+export const asistenciasService = {
+  async getAsistenciasChecador(horarioId: number): Promise<Asistencia[]> {
+    const { data, error } = await supabase
+      .from('asistencia_checador')
+      .select('*')
+      .eq('horario_id', horarioId);
+    
+    if (error) throw new Error(error.message);
+    return data;
+  },
+
+  async getAsistenciasJefe(horarioId: number): Promise<Asistencia[]> {
+    const { data, error } = await supabase
+      .from('asistencia_jefe')
+      .select('*')
+      .eq('horario_id', horarioId);
+    
+    if (error) throw new Error(error.message);
+    return data;
+  },
+
+  async getAsistenciasMaestro(horarioId: number): Promise<Asistencia[]> {
+    const { data, error } = await supabase
+      .from('asistencia_maestro')
+      .select('*')
+      .eq('horario_id', horarioId);
+    
+    if (error) throw new Error(error.message);
+    return data;
+  },
+
+  async getAsistenciasChecadorPorRango(maestroId: string, fechaInicio: string, fechaFin: string): Promise<Asistencia[]> {
+    const { data, error } = await supabase
+      .from('asistencia_checador')
+      .select('*')
+      .eq('maestro_id', maestroId)
+      .gte('fecha', fechaInicio)
+      .lte('fecha', fechaFin);
+    
+    if (error) throw new Error(error.message);
+    return data;
+  },
+
+  async getAsistenciasJefePorRango(maestroId: string, fechaInicio: string, fechaFin: string): Promise<Asistencia[]> {
+    const { data, error } = await supabase
+      .from('asistencia_jefe')
+      .select('*')
+      .eq('maestro_id', maestroId)
+      .gte('fecha', fechaInicio)
+      .lte('fecha', fechaFin);
+    
+    if (error) throw new Error(error.message);
+    return data;
+  },
+
+  async getAsistenciasMaestroPorRango(maestroId: string, fechaInicio: string, fechaFin: string): Promise<Asistencia[]> {
+    const { data, error } = await supabase
+      .from('asistencia_maestro')
+      .select('*')
+      .eq('maestro_id', maestroId)
+      .gte('fecha', fechaInicio)
+      .lte('fecha', fechaFin);
+    
+    if (error) throw new Error(error.message);
+    return data;
+  },
+
+  async getAsistenciasPorRango(maestroId: string, fechaInicio: string, fechaFin: string) {
+    try {
+      // Primero obtenemos los horarios del maestro
+      const { data: horarios, error: horarioError } = await supabase
+        .from('horario-maestro')
+        .select(`
+          id,
+          hora,
+          dia,
+          materia_id,
+          grupo_id,
+          grupo:grupo (
+            name,
+            classroom,
+            building
+          ),
+          materia:materias (
+            name
+          )
+        `)
+        .eq('maestro_id', maestroId);
+
+      if (horarioError) throw horarioError;
+      if (!horarios?.length) return { horarios: [], asistencias: { checador: [], jefe: [], maestro: [] } };
+
+      const horarioIds = horarios.map(h => h.id);
+
+      // Obtenemos todas las asistencias en paralelo
+      const [checadorData, jefeData, maestroData] = await Promise.all([
+        supabase
+          .from('asistencia_checador')
+          .select('*')
+          .in('horario_id', horarioIds)
+          .gte('fecha', fechaInicio)
+          .lte('fecha', fechaFin),
+        supabase
+          .from('asistencia_jefe')
+          .select('*')
+          .in('horario_id', horarioIds)
+          .gte('fecha', fechaInicio)
+          .lte('fecha', fechaFin),
+        supabase
+          .from('asistencia_maestro')
+          .select('*')
+          .in('horario_id', horarioIds)
+          .gte('fecha', fechaInicio)
+          .lte('fecha', fechaFin)
+      ]);
+
+      if (checadorData.error) throw checadorData.error;
+      if (jefeData.error) throw jefeData.error;
+      if (maestroData.error) throw maestroData.error;
+
+      return {
+        horarios: horarios.map(h => ({
+          ...h,
+          grupoInfo: h.grupo ? `${h.grupo.name} (${h.grupo.classroom} - ${h.grupo.building})` : 'No asignado',
+          materiaNombre: h.materia?.name || 'No asignada'
+        })),
+        asistencias: {
+          checador: checadorData.data || [],
+          jefe: jefeData.data || [],
+          maestro: maestroData.data || []
+        }
+      };
+    } catch (error) {
+      console.error('Error en getAsistenciasPorRango:', error);
+      throw error;
+    }
   }
 }; 

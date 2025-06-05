@@ -20,17 +20,21 @@ import {
 import { materiasService, carrerasService, Materia, Carrera } from '../services/supabaseService';
 
 export default function MateriasPage() {
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState(1);
   const [selectedSemester, setSelectedSemester] = useState<string>('1');
   const [selectedSubject, setSelectedSubject] = useState<string>('');
   const [newSubject, setNewSubject] = useState('');
   const [selectedCarrera, setSelectedCarrera] = useState<string>('');
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [carreras, setCarreras] = useState<Carrera[]>([]);
+  const [semestresDisponibles, setSemestresDisponibles] = useState<string[]>([]);
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Agregar solo el estado para el nombre
+  const [editingName, setEditingName] = useState('');
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -43,6 +47,8 @@ export default function MateriasPage() {
         
         if (carrerasData.length > 0) {
           setSelectedCarrera(carrerasData[0].id?.toString() || '');
+          // Cargar semestres de la carrera seleccionada
+          setSemestresDisponibles(Array.from({ length: carrerasData[0].semestres }, (_, i) => (i + 1).toString()));
         }
         
         // Cargar materias por semestre
@@ -82,12 +88,26 @@ export default function MateriasPage() {
     await loadMateriasBySemestre(semestre);
   };
 
-  const handleSubjectChange = (event: SelectChangeEvent) => {
-    setSelectedSubject(event.target.value);
+  const handleSubjectSelect = (event: SelectChangeEvent) => {
+    const materiaId = event.target.value;
+    setSelectedSubject(materiaId);
+    
+    // Cargar solo el nombre de la materia seleccionada
+    const materia = materias.find(m => m.id?.toString() === materiaId);
+    if (materia) {
+      setEditingName(materia.name);
+    }
   };
 
-  const handleCarreraChange = (event: SelectChangeEvent) => {
-    setSelectedCarrera(event.target.value);
+  const handleCarreraChange = async (event: SelectChangeEvent) => {
+    const carreraId = event.target.value;
+    setSelectedCarrera(carreraId);
+    
+    // Obtener la carrera seleccionada para cargar los semestres
+    const carreraSeleccionada = carreras.find(c => c.id?.toString() === carreraId);
+    if (carreraSeleccionada) {
+      setSemestresDisponibles(Array.from({ length: carreraSeleccionada.semestres }, (_, i) => (i + 1).toString()));
+    }
   };
 
   const handleSave = async () => {
@@ -106,6 +126,7 @@ export default function MateriasPage() {
       }
       
       await materiasService.update(materiaId, {
+        name: editingName || materia.name,
         semestre: Number(selectedSemester),
         carrera_id: selectedCarrera ? Number(selectedCarrera) : 1
       });
@@ -171,9 +192,6 @@ export default function MateriasPage() {
     setSuccess(null);
   };
 
-  // Generar opciones para los semestres (1-9)
-  const semestres = Array.from({ length: 9 }, (_, i) => (i + 1).toString());
-
   return (
     <Box sx={{ p: 3 }}>
       <Paper sx={{ mb: 3, borderRadius: 1, overflow: 'hidden' }}>
@@ -183,52 +201,22 @@ export default function MateriasPage() {
           variant="fullWidth"
           textColor="primary"
           indicatorColor="primary"
+          sx={{ 
+            '& .MuiTabs-flexContainer': {
+              flexDirection: 'row-reverse'
+            }
+          }}
         >
           <Tab label="Editar" />
           <Tab label="Agregar" />
         </Tabs>
       </Paper>
 
-      {tabValue === 0 ? (
+      {tabValue === 1 ? (
         <Paper sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
           <Typography variant="h5" gutterBottom align="center" sx={{ mb: 3 }}>
-            Seleccione el semestre al que pertenece la materia
+            Agregar nueva materia
           </Typography>
-
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Semestre</InputLabel>
-            <Select
-              value={selectedSemester}
-              label="Semestre"
-              onChange={handleSemesterChange}
-            >
-              {semestres.map((semestre) => (
-                <MenuItem key={semestre} value={semestre}>
-                  {semestre}° semestre
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <Typography variant="h5" gutterBottom align="center" sx={{ mt: 4, mb: 3 }}>
-            Seleccione la materia que desea editar
-          </Typography>
-
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Materia</InputLabel>
-            <Select
-              value={selectedSubject}
-              label="Materia"
-              onChange={handleSubjectChange}
-              disabled={materias.length === 0}
-            >
-              {materias.map((materia) => (
-                <MenuItem key={materia.id} value={materia.id?.toString()}>
-                  {materia.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
 
           <FormControl fullWidth margin="normal">
             <InputLabel>Carrera</InputLabel>
@@ -246,7 +234,107 @@ export default function MateriasPage() {
             </Select>
           </FormControl>
 
-          <Grid container justifyContent="flex-end" spacing={2} sx={{ mt: 4 }}>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Semestre</InputLabel>
+            <Select
+              value={selectedSemester}
+              label="Semestre"
+              onChange={handleSemesterChange}
+            >
+              {semestresDisponibles.map((semestre) => (
+                <MenuItem key={semestre} value={semestre}>
+                  {semestre}° semestre
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Nombre de la materia"
+            value={newSubject}
+            onChange={(e) => setNewSubject(e.target.value)}
+          />
+
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={handleAddMateria}
+            disabled={!newSubject || loading}
+            sx={{ mt: 3 }}
+          >
+            {loading ? <CircularProgress size={24} /> : 'Agregar materia'}
+          </Button>
+        </Paper>
+      ) : (
+        <Paper sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
+          <Typography variant="h5" gutterBottom align="center" sx={{ mb: 3 }}>
+            Editar materia
+          </Typography>
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Carrera</InputLabel>
+            <Select
+              value={selectedCarrera}
+              label="Carrera"
+              onChange={handleCarreraChange}
+              disabled={carreras.length === 0}
+            >
+              {carreras.map((carrera) => (
+                <MenuItem key={carrera.id} value={carrera.id?.toString()}>
+                  {carrera.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Semestre</InputLabel>
+            <Select
+              value={selectedSemester}
+              label="Semestre"
+              onChange={handleSemesterChange}
+            >
+              {semestresDisponibles.map((semestre) => (
+                <MenuItem key={semestre} value={semestre}>
+                  {semestre}° semestre
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Seleccionar Materia</InputLabel>
+            <Select
+              value={selectedSubject}
+              label="Seleccionar Materia"
+              onChange={handleSubjectSelect}
+              disabled={materias.length === 0}
+            >
+              {materias.map((materia) => (
+                <MenuItem key={materia.id} value={materia.id?.toString()}>
+                  {materia.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Nombre de la materia"
+            value={editingName}
+            onChange={(e) => setEditingName(e.target.value)}
+            disabled={!selectedSubject}
+          />
+
+          <Grid 
+            container 
+            justifyContent="flex-end" 
+            spacing={2} 
+            sx={{ mt: 4 }}
+          >
             <Grid item>
               <Button
                 variant="outlined"
@@ -267,61 +355,6 @@ export default function MateriasPage() {
               </Button>
             </Grid>
           </Grid>
-        </Paper>
-      ) : (
-        <Paper sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
-          <Typography variant="h5" gutterBottom align="center" sx={{ mb: 3 }}>
-            Agregar nueva materia
-          </Typography>
-
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Nombre de la materia"
-            value={newSubject}
-            onChange={(e) => setNewSubject(e.target.value)}
-          />
-
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Semestre</InputLabel>
-            <Select
-              value={selectedSemester}
-              label="Semestre"
-              onChange={handleSemesterChange}
-            >
-              {semestres.map((semestre) => (
-                <MenuItem key={semestre} value={semestre}>
-                  {semestre}° semestre
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Carrera</InputLabel>
-            <Select
-              value={selectedCarrera}
-              label="Carrera"
-              onChange={handleCarreraChange}
-              disabled={carreras.length === 0}
-            >
-              {carreras.map((carrera) => (
-                <MenuItem key={carrera.id} value={carrera.id?.toString()}>
-                  {carrera.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <Button
-            variant="contained"
-            fullWidth
-            onClick={handleAddMateria}
-            disabled={!newSubject || loading}
-            sx={{ mt: 3 }}
-          >
-            {loading ? <CircularProgress size={24} /> : 'Agregar materia'}
-          </Button>
         </Paper>
       )}
 

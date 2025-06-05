@@ -17,22 +17,32 @@ import {
   Alert,
   CircularProgress
 } from '@mui/material';
-import { Usuario, usuariosService } from '../services/supabaseService';
+import { Usuario, usuariosService, UserRole } from '../services/supabaseService';
+import { supabase } from '../lib/supabase';
 
 export default function UsuariosPage() {
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState(1);
   const [accountNumber, setAccountNumber] = useState('');
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<string>('Alumno');
+  const [role, setRole] = useState<UserRole>('Alumno');
   const [searchAccount, setSearchAccount] = useState('');
+  const [numeroCuenta, setNumeroCuenta] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [, setUsuarios] = useState<Usuario[]>([]);
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
+
+  const roles: UserRole[] = [
+    'Alumno',
+    'Jefe_de_Grupo',
+    'Checador',
+    'Maestro',
+    'Administrador'
+  ];
 
   useEffect(() => {
     // Cargar la lista de usuarios al iniciar
@@ -54,13 +64,13 @@ export default function UsuariosPage() {
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
     // Limpiar formulario al cambiar de tab
-    if (newValue === 1) {
+    if (newValue === 0) {
       clearForm();
     }
   };
 
   const handleRoleChange = (event: SelectChangeEvent) => {
-    setRole(event.target.value);
+    setRole(event.target.value as UserRole);
   };
 
   const clearForm = () => {
@@ -71,6 +81,7 @@ export default function UsuariosPage() {
     setRole('Alumno');
     setSearchAccount('');
     setSelectedUser(null);
+    setNumeroCuenta('');
   };
 
   const handleSearch = async () => {
@@ -81,7 +92,26 @@ export default function UsuariosPage() {
 
     setLoading(true);
     try {
-      // Buscar el usuario por ID
+      // Primero intentamos buscar por número de cuenta
+      const { data: usersByNumCuenta } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('numero_cuenta', searchAccount)
+        .single();
+
+      if (usersByNumCuenta) {
+        setSelectedUser(usersByNumCuenta);
+        setAccountNumber(usersByNumCuenta.id?.toString() || '');
+        setUserName(usersByNumCuenta.name);
+        setEmail(usersByNumCuenta.email || '');
+        setPassword(''); // Dejar el campo de contraseña vacío
+        setRole(usersByNumCuenta.role || 'Alumno');
+        setNumeroCuenta(usersByNumCuenta.numero_cuenta || '');
+        setSuccess('Usuario encontrado');
+        return;
+      }
+
+      // Si no se encuentra por número de cuenta, intentamos por ID
       const userId = Number(searchAccount);
       const user = await usuariosService.getById(userId);
       
@@ -89,13 +119,13 @@ export default function UsuariosPage() {
         throw new Error('Usuario no encontrado');
       }
       
-      // Llenar el formulario con los datos del usuario
       setSelectedUser(user);
       setAccountNumber(user.id?.toString() || '');
       setUserName(user.name);
       setEmail(user.email || '');
-      setPassword(user.password || '');
+      setPassword(''); // Dejar el campo de contraseña vacío
       setRole(user.role || 'Alumno');
+      setNumeroCuenta(user.numero_cuenta || '');
       
       setSuccess('Usuario encontrado');
     } catch (err: any) {
@@ -122,16 +152,27 @@ export default function UsuariosPage() {
       const updatedUser: Partial<Usuario> = {
         name: userName,
         email,
-        role: role as 'Alumno' | 'Jefe de grupo' | 'Coordinador' | 'Maestro' | 'Administrador',
+        role: role as UserRole,
+        numero_cuenta: numeroCuenta
       };
       
-      // Solo actualizar la contraseña si se modificó
-      if (password && password !== '********') {
+      // Solo incluir la contraseña si se ha ingresado una nueva
+      if (password.trim() !== '') {
         updatedUser.password = password;
       }
       
       await usuariosService.update(Number(accountNumber), updatedUser);
       setSuccess('Usuario actualizado correctamente');
+      
+      // Actualizar el selectedUser con los nuevos datos
+      setSelectedUser({
+        ...selectedUser,
+        ...updatedUser,
+        id: Number(accountNumber)
+      });
+      
+      // Limpiar el campo de contraseña después de guardar
+      setPassword('');
     } catch (err: any) {
       setError('Error al guardar usuario: ' + err.message);
     } finally {
@@ -173,7 +214,8 @@ export default function UsuariosPage() {
         name: userName,
         email,
         password,
-        role: role as 'Alumno' | 'Jefe de grupo' | 'Coordinador' | 'Maestro' | 'Administrador',
+        role: role as UserRole,
+        numero_cuenta: numeroCuenta
       };
       
       await usuariosService.create(newUser);
@@ -200,24 +242,99 @@ export default function UsuariosPage() {
           variant="fullWidth"
           textColor="primary"
           indicatorColor="primary"
+          sx={{ 
+            '& .MuiTabs-flexContainer': {
+              flexDirection: 'row-reverse'
+            }
+          }}
         >
           <Tab label="Editar" />
-          <Tab label="Añadir" />
+          <Tab label="Agregar" />
         </Tabs>
       </Paper>
 
-      {tabValue === 0 ? (
+      {tabValue === 1 ? (
         <Paper sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
           <Typography variant="h5" gutterBottom align="center">
-            Para poder ver o editar un usuario es necesario contar con un numero de cuenta
+            Agregar nuevo usuario
+          </Typography>
+
+          <Box component="form" sx={{ mt: 3 }}>
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Rol</InputLabel>
+              <Select
+                value={role}
+                onChange={(e) => setRole(e.target.value as UserRole)}
+                label="Rol"
+              >
+                {roles.map((role) => (
+                  <MenuItem key={role} value={role}>
+                    {role}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Número de Cuenta"
+              value={numeroCuenta}
+              onChange={(e) => setNumeroCuenta(e.target.value)}
+              helperText="Este campo es opcional"
+            />
+            
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Nombre del usuario"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              required
+            />
+            
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Correo Electrónico"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Contraseña"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            
+            <Button 
+              fullWidth
+              variant="contained"
+              onClick={handleAddUser}
+              disabled={loading}
+              sx={{ mt: 3 }}
+            >
+              {loading ? <CircularProgress size={24} /> : 'Crear usuario'}
+            </Button>
+          </Box>
+        </Paper>
+      ) : (
+        <Paper sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
+          <Typography variant="h5" gutterBottom align="center">
+            Editar usuario
           </Typography>
 
           <Grid container spacing={2} sx={{ mb: 4, mt: 2 }}>
             <Grid item xs>
               <TextField
                 fullWidth
-                label="Número de cuenta"
-                type="number"
+                label="Buscar por número de cuenta o ID"
                 value={searchAccount}
                 onChange={(e) => setSearchAccount(e.target.value)}
               />
@@ -234,19 +351,38 @@ export default function UsuariosPage() {
             </Grid>
           </Grid>
 
-          <Typography variant="h5" gutterBottom align="center">
-            Datos del usuario
-          </Typography>
-
           <Box component="form" sx={{ mt: 3 }}>
             <TextField
               fullWidth
               margin="normal"
-              label="Número de cuenta"
-              type="number"
+              label="ID"
               value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
-              disabled={true} // No permitir cambiar el ID
+              disabled={true}
+            />
+            
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Rol</InputLabel>
+              <Select
+                value={role}
+                onChange={handleRoleChange}
+                label="Rol"
+                disabled={!selectedUser}
+              >
+                {roles.map((role) => (
+                  <MenuItem key={role} value={role}>
+                    {role}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Número de cuenta"
+              value={numeroCuenta}
+              onChange={(e) => setNumeroCuenta(e.target.value)}
+              disabled={!selectedUser}
             />
             
             <TextField
@@ -276,24 +412,8 @@ export default function UsuariosPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={!selectedUser}
-              helperText="Deje en blanco para mantener la misma contraseña"
+              helperText="Dejar en blanco para mantener la contraseña actual"
             />
-            
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Rol del usuario</InputLabel>
-              <Select
-                value={role}
-                label="Rol del usuario"
-                onChange={handleRoleChange}
-                disabled={!selectedUser}
-              >
-                <MenuItem value="Alumno">Alumno</MenuItem>
-                <MenuItem value="Jefe de grupo">Jefe de grupo</MenuItem>
-                <MenuItem value="Coordinador">Coordinador</MenuItem>
-                <MenuItem value="Maestro">Maestro</MenuItem>
-                <MenuItem value="Administrador">Administrador</MenuItem>
-              </Select>
-            </FormControl>
             
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
               <Button 
@@ -314,71 +434,9 @@ export default function UsuariosPage() {
             </Box>
           </Box>
         </Paper>
-      ) : (
-        <Paper sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
-          <Typography variant="h5" gutterBottom align="center">
-            Agregar nuevo usuario
-          </Typography>
-
-          <Box component="form" sx={{ mt: 3 }}>
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Nombre del usuario"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              required
-            />
-            
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Correo Electrónico"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Contraseña"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Rol del usuario</InputLabel>
-              <Select
-                value={role}
-                label="Rol del usuario"
-                onChange={handleRoleChange}
-              >
-                <MenuItem value="Alumno">Alumno</MenuItem>
-                <MenuItem value="Jefe de grupo">Jefe de grupo</MenuItem>
-                <MenuItem value="Coordinador">Coordinador</MenuItem>
-                <MenuItem value="Maestro">Maestro</MenuItem>
-                <MenuItem value="Administrador">Administrador</MenuItem>
-              </Select>
-            </FormControl>
-            
-            <Button 
-              fullWidth
-              variant="contained"
-              onClick={handleAddUser}
-              disabled={loading}
-              sx={{ mt: 3 }}
-            >
-              {loading ? <CircularProgress size={24} /> : 'Crear usuario'}
-            </Button>
-          </Box>
-        </Paper>
       )}
 
-      {/* Alertas de éxito y error */}
+      {/* Alertas */}
       <Snackbar open={!!error} autoHideDuration={6000} onClose={handleCloseAlert}>
         <Alert onClose={handleCloseAlert} severity="error" sx={{ width: '100%' }}>
           {error}
